@@ -1,1743 +1,943 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>⚡ Grammaire Battle Arena</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-        html,
-        body {
-            height: 100%;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: #0a0e14;
-            color: #e6edf3;
-            overflow: hidden;
-            touch-action: none;
-        }
-        .screen {
-            display: none;
-            flex-direction: column;
-            height: 100vh;
-            width: 100vw;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background: #0a0e14;
-        }
-        .screen.active {
-            display: flex;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>⚡ Grammaire Battle Arena</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-tap-highlight-color:transparent; }
+html,body { height:100%; font-family:'Segoe UI',system-ui,sans-serif; background:#0a0e14; color:#e6edf3; overflow:hidden; touch-action:none; }
+.screen { display:none; flex-direction:column; height:100vh; width:100vw; position:fixed; top:0; left:0; background:#0a0e14; }
+.screen.active { display:flex; }
 
-        /* ── Landing ── */
-        #landing {
-            align-items: center;
-            justify-content: center;
-            gap: 1.5rem;
-            text-align: center;
-            padding: 2rem;
-        }
-        #landing h1 {
-            font-size: clamp(2.2rem, 7vw, 4rem);
-            font-weight: 900;
-            background: linear-gradient(135deg, #f5c842, #9d4edd);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        #landing p {
-            color: #8b949e;
-            font-size: 1.1rem;
-        }
-        .btn-group {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            width: 100%;
-            max-width: 340px;
-        }
-        .btn-main {
-            padding: 1rem 2rem;
-            border-radius: 14px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            transition: .15s;
-            border: none;
-            cursor: pointer;
-        }
-        .btn-host {
-            background: #f5c842;
-            color: #000;
-        }
-        .btn-host:hover {
-            background: #d4a832;
-        }
-        .btn-join {
-            background: #7b2fbe;
-            color: #fff;
-        }
-        .btn-join:hover {
-            background: #9d4edd;
-        }
-        .btn-spectate {
-            background: rgba(255, 255, 255, 0.06);
-            color: #e6edf3;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .btn-spectate:hover {
-            background: rgba(255, 255, 255, 0.12);
-        }
+/* ── Landing ── */
+#landing { align-items:center; justify-content:center; gap:1.5rem; text-align:center; padding:2rem; }
+#landing h1 { font-size:clamp(2.2rem,7vw,4rem); font-weight:900; background:linear-gradient(135deg,#f5c842,#9d4edd); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+#landing p { color:#8b949e; font-size:1.1rem; }
+.btn-group { display:flex; flex-direction:column; gap:1rem; width:100%; max-width:340px; }
+.btn-main { padding:1rem 2rem; border-radius:14px; font-size:1.1rem; font-weight:700; transition:.15s; border:none; cursor:pointer; }
+.btn-host { background:#f5c842; color:#000; }
+.btn-host:hover { background:#d4a832; }
+.btn-join { background:#7b2fbe; color:#fff; }
+.btn-join:hover { background:#9d4edd; }
+.btn-spectate { background:rgba(255,255,255,0.06); color:#e6edf3; border:1px solid rgba(255,255,255,0.1); }
+.btn-spectate:hover { background:rgba(255,255,255,0.12); }
 
-        /* ── Room ── */
-        #room-screen {
-            padding: 1.5rem;
-            gap: 1rem;
-        }
-        #room-screen .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: .5rem;
-        }
-        #room-screen .header h2 {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #f5c842;
-        }
-        .room-code {
-            background: rgba(255, 255, 255, 0.06);
-            padding: .5rem 1.2rem;
-            border-radius: 30px;
-            font-size: 1.4rem;
-            font-weight: 800;
-            letter-spacing: 4px;
-            color: #f5c842;
-            border: 1px solid rgba(245, 200, 66, 0.3);
-        }
-        .players-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: .8rem;
-            padding: .5rem 0;
-            min-height: 60px;
-        }
-        .player-tag {
-            display: flex;
-            align-items: center;
-            gap: .5rem;
-            background: rgba(255, 255, 255, 0.06);
-            padding: .4rem 1rem .4rem .6rem;
-            border-radius: 30px;
-            font-size: .95rem;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-        }
-        .player-tag .emoji {
-            font-size: 1.5rem;
-        }
-        .player-tag .name {
-            font-weight: 500;
-        }
-        .player-tag .ready {
-            color: #3fb950;
-            font-size: .75rem;
-        }
-        .emoji-picker {
-            display: flex;
-            flex-wrap: wrap;
-            gap: .6rem;
-            padding: .5rem 0;
-        }
-        .emoji-picker button {
-            font-size: 2rem;
-            width: 3.2rem;
-            height: 3.2rem;
-            border-radius: 50%;
-            border: 2px solid transparent;
-            background: rgba(255, 255, 255, 0.04);
-            cursor: pointer;
-            transition: .15s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .emoji-picker button.selected {
-            border-color: #f5c842;
-            background: rgba(245, 200, 66, 0.15);
-            transform: scale(1.1);
-        }
-        .emoji-picker button:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-        .room-actions {
-            display: flex;
-            gap: 1rem;
-            margin-top: auto;
-            padding-top: 1rem;
-        }
-        .room-actions button {
-            flex: 1;
-            padding: .9rem;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 1rem;
-            border: none;
-            cursor: pointer;
-            transition: .15s;
-        }
-        .btn-launch {
-            background: #3fb950;
-            color: #000;
-        }
-        .btn-launch:disabled {
-            opacity: .4;
-            cursor: not-allowed;
-        }
-        .btn-launch:not(:disabled):hover {
-            filter: brightness(1.1);
-        }
-        .btn-leave {
-            background: rgba(255, 255, 255, 0.06);
-            color: #e6edf3;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .btn-leave:hover {
-            background: rgba(255, 255, 255, 0.12);
-        }
+/* ── Network notice ── */
+.net-notice { font-size:.78rem; color:#8b949e; margin-top:.5rem; max-width:320px; text-align:center; line-height:1.5; }
+.net-notice strong { color:#f5c842; }
 
-        /* ── Arena ── */
-        #arena {
-            background: #0a0e14;
-            position: relative;
-            overflow: hidden;
-        }
-        #arena canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            touch-action: none;
-            cursor: none;
-        }
-        .hud {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            padding: .8rem 1.2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            pointer-events: none;
-            z-index: 10;
-            background: linear-gradient(to bottom, rgba(10, 14, 20, 0.8) 0%, transparent 100%);
-        }
-        .hud-left {
-            display: flex;
-            flex-direction: column;
-            gap: .2rem;
-        }
-        .hud-timer {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: #f5c842;
-            font-variant-numeric: tabular-nums;
-            text-shadow: 0 2px 12px rgba(245, 200, 66, 0.3);
-        }
-        .hud-score {
-            font-size: .9rem;
-            color: #8b949e;
-        }
-        .hud-score strong {
-            color: #f5c842;
-        }
-        .hud-players {
-            display: flex;
-            gap: .8rem;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-            pointer-events: auto;
-        }
-        .hud-player {
-            display: flex;
-            align-items: center;
-            gap: .4rem;
-            background: rgba(0, 0, 0, 0.6);
-            padding: .2rem .8rem .2rem .4rem;
-            border-radius: 30px;
-            font-size: .8rem;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            backdrop-filter: blur(4px);
-        }
-        .hud-player .emoji {
-            font-size: 1.2rem;
-        }
-        .hud-player .pts {
-            font-weight: 700;
-            color: #f5c842;
-        }
-        .hud-player .name {
-            max-width: 60px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+/* ── Room ── */
+#room-screen { padding:1.5rem; gap:1rem; overflow-y:auto; }
+#room-screen .header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.5rem; }
+#room-screen .header h2 { font-size:1.3rem; font-weight:700; color:#f5c842; }
+.room-url { background:rgba(255,255,255,0.06); padding:.5rem 1rem; border-radius:10px; font-size:.75rem; color:#8b949e; word-break:break-all; border:1px solid rgba(255,255,255,0.08); }
+.room-url strong { color:#f5c842; }
+.qr-hint { font-size:.8rem; color:#8b949e; }
+.players-grid { display:flex; flex-wrap:wrap; gap:.8rem; padding:.5rem 0; min-height:60px; }
+.player-tag { display:flex; align-items:center; gap:.5rem; background:rgba(255,255,255,0.06); padding:.4rem 1rem .4rem .6rem; border-radius:30px; font-size:.95rem; border:1px solid rgba(255,255,255,0.06); }
+.player-tag .emoji { font-size:1.5rem; }
+.emoji-picker { display:flex; flex-wrap:wrap; gap:.6rem; padding:.5rem 0; }
+.emoji-picker button { font-size:2rem; width:3.2rem; height:3.2rem; border-radius:50%; border:2px solid transparent; background:rgba(255,255,255,0.04); cursor:pointer; transition:.15s; display:flex; align-items:center; justify-content:center; }
+.emoji-picker button.selected { border-color:#f5c842; background:rgba(245,200,66,0.15); transform:scale(1.1); }
+.room-actions { display:flex; gap:1rem; margin-top:auto; padding-top:1rem; }
+.room-actions button { flex:1; padding:.9rem; border-radius:12px; font-weight:700; font-size:1rem; border:none; cursor:pointer; transition:.15s; }
+.btn-launch { background:#3fb950; color:#000; }
+.btn-launch:disabled { opacity:.4; cursor:not-allowed; }
+.btn-launch:not(:disabled):hover { filter:brightness(1.1); }
+.btn-leave { background:rgba(255,255,255,0.06); color:#e6edf3; border:1px solid rgba(255,255,255,0.1); }
 
-        /* ── Question Overlay ── */
-        #question-overlay {
-            position: absolute;
-            inset: 0;
-            z-index: 50;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(6px);
-            padding: 1.5rem;
-        }
-        #question-overlay.show {
-            display: flex;
-        }
-        .question-card {
-            background: #161b22;
-            border-radius: 20px;
-            padding: 2rem;
-            max-width: 560px;
-            width: 100%;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        .question-card .duel-info {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: .85rem;
-            color: #8b949e;
-            margin-bottom: .8rem;
-        }
-        .question-card .duel-info .vs {
-            font-weight: 700;
-            color: #f5c842;
-        }
-        .question-card .q-text {
-            font-size: 1.15rem;
-            font-weight: 600;
-            line-height: 1.5;
-            margin-bottom: 1.2rem;
-            min-height: 3rem;
-        }
-        .question-card .q-choices {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: .7rem;
-        }
-        .question-card .q-choices button {
-            padding: .9rem 1rem;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 500;
-            border: 1.5px solid rgba(255, 255, 255, 0.08);
-            background: rgba(255, 255, 255, 0.04);
-            color: #e6edf3;
-            cursor: pointer;
-            transition: .15s;
-            text-align: left;
-        }
-        .question-card .q-choices button:hover:not(:disabled) {
-            border-color: #9d4edd;
-            background: rgba(157, 78, 221, 0.1);
-        }
-        .question-card .q-choices button:disabled {
-            opacity: .5;
-            cursor: default;
-        }
-        .question-card .q-choices button.correct {
-            border-color: #3fb950;
-            background: rgba(63, 185, 80, 0.15);
-            color: #3fb950;
-        }
-        .question-card .q-choices button.wrong {
-            border-color: #f85149;
-            background: rgba(248, 81, 73, 0.1);
-            color: #f85149;
-        }
-        .question-card .q-result {
-            margin-top: 1rem;
-            text-align: center;
-            font-size: 1.1rem;
-            font-weight: 600;
-            min-height: 2.5rem;
-            padding: .5rem;
-            border-radius: 10px;
-        }
-        .q-result.win {
-            color: #3fb950;
-            background: rgba(63, 185, 80, 0.08);
-        }
-        .q-result.lose {
-            color: #f85149;
-            background: rgba(248, 81, 73, 0.08);
-        }
-        .q-result.draw {
-            color: #f5c842;
-            background: rgba(245, 200, 66, 0.08);
-        }
-        .question-card .q-tip {
-            font-size: .85rem;
-            color: #8b949e;
-            margin-top: .6rem;
-            font-style: italic;
-        }
-        .question-card .q-close-btn {
-            margin-top: 1rem;
-            width: 100%;
-            padding: .8rem;
-            border-radius: 12px;
-            background: #f5c842;
-            color: #000;
-            font-weight: 700;
-            font-size: 1rem;
-            border: none;
-            cursor: pointer;
-            transition: .15s;
-        }
-        .question-card .q-close-btn:hover {
-            background: #d4a832;
-        }
+/* ── Arena ── */
+#arena { background:#0a0e14; position:relative; overflow:hidden; }
+#arena canvas { display:block; width:100%; height:100%; touch-action:none; cursor:none; }
+.hud { position:absolute; top:0; left:0; right:0; padding:.8rem 1.2rem; display:flex; justify-content:space-between; align-items:flex-start; pointer-events:none; z-index:10; background:linear-gradient(to bottom,rgba(10,14,20,0.8) 0%,transparent 100%); }
+.hud-left { display:flex; flex-direction:column; gap:.2rem; }
+.hud-timer { font-size:1.8rem; font-weight:800; color:#f5c842; font-variant-numeric:tabular-nums; text-shadow:0 2px 12px rgba(245,200,66,0.3); }
+.hud-score { font-size:.9rem; color:#8b949e; }
+.hud-score strong { color:#f5c842; }
+.hud-players { display:flex; gap:.8rem; flex-wrap:wrap; justify-content:flex-end; pointer-events:auto; }
+.hud-player { display:flex; align-items:center; gap:.4rem; background:rgba(0,0,0,0.6); padding:.2rem .8rem .2rem .4rem; border-radius:30px; font-size:.8rem; border:1px solid rgba(255,255,255,0.06); backdrop-filter:blur(4px); }
+.hud-player .pts { font-weight:700; color:#f5c842; }
+.hud-player .name { max-width:60px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-        /* ── Joystick ── */
-        #joystick-area {
-            position: absolute;
-            bottom: 30px;
-            left: 30px;
-            width: 130px;
-            height: 130px;
-            z-index: 20;
-            pointer-events: auto;
-            touch-action: none;
-        }
-        #joystick-base {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.06);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            position: relative;
-            touch-action: none;
-            backdrop-filter: blur(4px);
-        }
-        #joystick-knob {
-            position: absolute;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: radial-gradient(circle, #9d4edd, #7b2fbe);
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            touch-action: none;
-            box-shadow: 0 0 30px rgba(157, 78, 221, 0.3);
-            transition: box-shadow .2s;
-        }
-        #joystick-knob.active {
-            box-shadow: 0 0 50px rgba(157, 78, 221, 0.6);
-        }
+/* ── Question Overlay ── */
+#question-overlay { position:absolute; inset:0; z-index:50; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.7); backdrop-filter:blur(6px); padding:1.5rem; }
+#question-overlay.show { display:flex; }
+.question-card { background:#161b22; border-radius:20px; padding:2rem; max-width:560px; width:100%; border:1px solid rgba(255,255,255,0.08); box-shadow:0 20px 60px rgba(0,0,0,0.8); max-height:90vh; overflow-y:auto; }
+.question-card .duel-info { display:flex; align-items:center; justify-content:space-between; font-size:.85rem; color:#8b949e; margin-bottom:.8rem; }
+.question-card .duel-info .vs { font-weight:700; color:#f5c842; }
+.question-card .q-text { font-size:1.15rem; font-weight:600; line-height:1.5; margin-bottom:1.2rem; min-height:3rem; }
+.question-card .q-choices { display:grid; grid-template-columns:1fr 1fr; gap:.7rem; }
+.question-card .q-choices button { padding:.9rem 1rem; border-radius:12px; font-size:1rem; font-weight:500; border:1.5px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.04); color:#e6edf3; cursor:pointer; transition:.15s; text-align:left; }
+.question-card .q-choices button:hover:not(:disabled) { border-color:#9d4edd; background:rgba(157,78,221,0.1); }
+.question-card .q-choices button:disabled { opacity:.5; cursor:default; }
+.question-card .q-choices button.correct { border-color:#3fb950; background:rgba(63,185,80,0.15); color:#3fb950; }
+.question-card .q-choices button.wrong { border-color:#f85149; background:rgba(248,81,73,0.1); color:#f85149; }
+.question-card .q-result { margin-top:1rem; text-align:center; font-size:1.1rem; font-weight:600; min-height:2.5rem; padding:.5rem; border-radius:10px; }
+.q-result.win { color:#3fb950; background:rgba(63,185,80,0.08); }
+.q-result.lose { color:#f85149; background:rgba(248,81,73,0.08); }
+.q-result.draw { color:#f5c842; background:rgba(245,200,66,0.08); }
+.question-card .q-tip { font-size:.85rem; color:#8b949e; margin-top:.6rem; font-style:italic; }
+.question-card .q-close-btn { margin-top:1rem; width:100%; padding:.8rem; border-radius:12px; background:#f5c842; color:#000; font-weight:700; font-size:1rem; border:none; cursor:pointer; }
+.question-card .q-close-btn:hover { background:#d4a832; }
 
-        /* ── End ── */
-        #end-screen {
-            align-items: center;
-            justify-content: center;
-            gap: 1.5rem;
-            text-align: center;
-            padding: 2rem;
-        }
-        #end-screen h2 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: #f5c842;
-        }
-        #end-screen .winner-emoji {
-            font-size: 4rem;
-        }
-        .end-podium {
-            display: flex;
-            flex-direction: column;
-            gap: .6rem;
-            width: 100%;
-            max-width: 400px;
-        }
-        .end-podium .item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: .8rem 1.2rem;
-            background: rgba(255, 255, 255, 0.04);
-            border-radius: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-        }
-        .end-podium .item.rank1 {
-            border-color: #f5c842;
-            background: rgba(245, 200, 66, 0.08);
-        }
-        .end-podium .item.rank2 {
-            border-color: #58a6ff;
-        }
-        .end-podium .item.rank3 {
-            border-color: #9d4edd;
-        }
-        .end-podium .item .pos {
-            font-size: 1.3rem;
-            width: 2rem;
-        }
-        .end-podium .item .ename {
-            flex: 1;
-            font-weight: 600;
-            text-align: left;
-        }
-        .end-podium .item .epts {
-            font-weight: 800;
-            color: #f5c842;
-        }
-        .btn-replay {
-            padding: .9rem 2.5rem;
-            border-radius: 14px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            background: #7b2fbe;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            transition: .15s;
-        }
-        .btn-replay:hover {
-            background: #9d4edd;
-        }
+/* ── Joystick ── */
+#joystick-area { position:absolute; bottom:30px; left:30px; width:130px; height:130px; z-index:20; touch-action:none; }
+#joystick-base { width:100%; height:100%; border-radius:50%; background:rgba(255,255,255,0.06); border:2px solid rgba(255,255,255,0.1); position:relative; touch-action:none; backdrop-filter:blur(4px); }
+#joystick-knob { position:absolute; width:50px; height:50px; border-radius:50%; background:radial-gradient(circle,#9d4edd,#7b2fbe); top:50%; left:50%; transform:translate(-50%,-50%); touch-action:none; box-shadow:0 0 30px rgba(157,78,221,0.3); transition:box-shadow .2s; }
+#joystick-knob.active { box-shadow:0 0 50px rgba(157,78,221,0.6); }
 
-        /* ── Responsive ── */
-        @media (max-width: 600px) {
-            #joystick-area {
-                width: 100px;
-                height: 100px;
-                bottom: 20px;
-                left: 20px;
-            }
-            #joystick-knob {
-                width: 40px;
-                height: 40px;
-            }
-            .question-card {
-                padding: 1.2rem;
-            }
-            .question-card .q-choices {
-                grid-template-columns: 1fr 1fr;
-            }
-            .hud-timer {
-                font-size: 1.4rem;
-            }
-            .hud-player .name {
-                max-width: 40px;
-            }
-            .room-code {
-                font-size: 1.1rem;
-                padding: .3rem .8rem;
-            }
-        }
-        @media (max-width: 400px) {
-            #joystick-area {
-                width: 80px;
-                height: 80px;
-                bottom: 12px;
-                left: 12px;
-            }
-            #joystick-knob {
-                width: 32px;
-                height: 32px;
-            }
-        }
-    </style>
+/* ── End ── */
+#end-screen { align-items:center; justify-content:center; gap:1.5rem; text-align:center; padding:2rem; }
+#end-screen h2 { font-size:2.5rem; font-weight:800; color:#f5c842; }
+.end-podium { display:flex; flex-direction:column; gap:.6rem; width:100%; max-width:400px; }
+.end-podium .item { display:flex; align-items:center; gap:1rem; padding:.8rem 1.2rem; background:rgba(255,255,255,0.04); border-radius:14px; border:1px solid rgba(255,255,255,0.06); }
+.end-podium .item.rank1 { border-color:#f5c842; background:rgba(245,200,66,0.08); }
+.end-podium .item.rank2 { border-color:#58a6ff; }
+.end-podium .item.rank3 { border-color:#9d4edd; }
+.end-podium .item .pos { font-size:1.3rem; width:2rem; }
+.end-podium .item .ename { flex:1; font-weight:600; text-align:left; }
+.end-podium .item .epts { font-weight:800; color:#f5c842; }
+.btn-replay { padding:.9rem 2.5rem; border-radius:14px; font-size:1.1rem; font-weight:700; background:#7b2fbe; color:#fff; border:none; cursor:pointer; }
+.btn-replay:hover { background:#9d4edd; }
+
+/* ── Waiting (player) ── */
+.player-wait { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:1rem; color:#8b949e; font-size:1.1rem; }
+.player-wait .big { font-size:3rem; animation:pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:.4}50%{opacity:1} }
+
+@media(max-width:600px){
+  #joystick-area{width:100px;height:100px;bottom:20px;left:20px}
+  #joystick-knob{width:40px;height:40px}
+  .question-card{padding:1.2rem}
+  .hud-timer{font-size:1.4rem}
+  .hud-player .name{max-width:40px}
+}
+</style>
 </head>
 <body>
 
-    <!-- ════ LANDING ════ -->
-    <div id="landing" class="screen active">
-        <div>
-            <h1>⚡ Grammaire Arena</h1>
-            <p>Perce, réponds, vole !</p>
-        </div>
-        <div class="btn-group">
-            <button class="btn-main btn-host" onclick="createRoom()">🚀 Créer une arène</button>
-            <button class="btn-main btn-join" onclick="showJoin()">🔗 Rejoindre une arène</button>
-            <button class="btn-main btn-spectate" onclick="spectate()">👁️ Regarder</button>
-        </div>
-        <div style="margin-top:1rem;font-size:.8rem;color:#8b949e">Partie cross‑device • 3 min • voleur de points</div>
+<!-- ════ LANDING ════ -->
+<div id="landing" class="screen active">
+  <div>
+    <h1>⚡ Grammaire Arena</h1>
+    <p>Perce, réponds, vole des points !</p>
+  </div>
+  <div class="btn-group">
+    <button class="btn-main btn-host" onclick="createRoom()">🚀 Créer une arène (Maître)</button>
+    <button class="btn-main btn-join" onclick="showJoin()">🔗 Rejoindre (Joueur)</button>
+    <button class="btn-main btn-spectate" onclick="goSpectate()">👁️ Tableau / Spectateur</button>
+  </div>
+  <p class="net-notice">Tous les appareils doivent être sur le <strong>même Wi-Fi</strong> et ouvrir <strong>la même URL</strong> dans le même navigateur (Safari ou Chrome).</p>
+</div>
+
+<!-- ════ ROOM ════ -->
+<div id="room-screen" class="screen">
+  <div class="header">
+    <h2>🏟️ Arène</h2>
+    <div id="role-badge" style="font-size:.85rem;padding:.3rem .9rem;border-radius:20px;background:rgba(245,200,66,.12);color:#f5c842;border:1px solid rgba(245,200,66,.3)">Maître</div>
+  </div>
+
+  <div class="room-url">
+    <strong>URL à partager :</strong><br>
+    <span id="room-url-text">—</span>
+    <br><span class="qr-hint">Les joueurs ouvrent cette URL → cliquent "Rejoindre"</span>
+  </div>
+
+  <div style="color:#8b949e;font-size:.85rem">Joueurs connectés : <span id="room-player-count" style="color:#f5c842;font-weight:700">0</span></div>
+  <div class="players-grid" id="room-players"></div>
+
+  <div>
+    <div style="color:#8b949e;font-size:.85rem;margin-bottom:.4rem">Ton emoji :</div>
+    <div class="emoji-picker" id="emoji-picker">
+      <button data-emoji="😀">😀</button>
+      <button data-emoji="😎">😎</button>
+      <button data-emoji="🤩">🤩</button>
+      <button data-emoji="🥳">🥳</button>
+      <button data-emoji="🤠">🤠</button>
+      <button data-emoji="👻">👻</button>
+      <button data-emoji="🤖">🤖</button>
+      <button data-emoji="🐱">🐱</button>
+      <button data-emoji="🦊">🦊</button>
+      <button data-emoji="🐉">🐉</button>
     </div>
+  </div>
 
-    <!-- ════ ROOM ════ -->
-    <div id="room-screen" class="screen">
-        <div class="header">
-            <h2>🏟️ Arène</h2>
-            <div class="room-code" id="room-code-display">••••</div>
-        </div>
-        <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
-            <span style="color:#8b949e;font-size:.9rem">Joueurs :</span>
-            <span id="room-player-count" style="color:#f5c842;font-weight:700">0</span>
-        </div>
-        <div class="players-grid" id="room-players"></div>
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+    <input type="text" id="player-name-input" placeholder="Ton prénom" maxlength="16"
+      style="flex:1;min-width:140px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:.7rem 1rem;color:#e6edf3;font-size:1rem">
+    <button onclick="updatePlayerProfile()" style="padding:.7rem 1.5rem;border-radius:10px;background:#7b2fbe;color:#fff;font-weight:600;border:none;cursor:pointer">✓</button>
+  </div>
 
-        <div style="margin-top:.5rem">
-            <div style="color:#8b949e;font-size:.85rem;margin-bottom:.4rem">Choisis ton emoji :</div>
-            <div class="emoji-picker" id="emoji-picker">
-                <button data-emoji="😀">😀</button>
-                <button data-emoji="😎">😎</button>
-                <button data-emoji="🤩">🤩</button>
-                <button data-emoji="🥳">🥳</button>
-                <button data-emoji="😄">😄</button>
-                <button data-emoji="🤠">🤠</button>
-                <button data-emoji="👻">👻</button>
-                <button data-emoji="🤖">🤖</button>
-                <button data-emoji="🐱">🐱</button>
-                <button data-emoji="🦊">🦊</button>
-                <button data-emoji="🐼">🐼</button>
-                <button data-emoji="🐉">🐉</button>
-            </div>
-        </div>
+  <div class="room-actions">
+    <button class="btn-launch" id="btn-launch" onclick="launchGame()" disabled>⚔️ Lancer la bataille</button>
+    <button class="btn-leave" onclick="leaveRoom()">✕ Quitter</button>
+  </div>
+</div>
 
-        <div style="display:flex;gap:.5rem;margin-top:.3rem;flex-wrap:wrap">
-            <input type="text" id="player-name-input" placeholder="Ton pseudo" maxlength="16"
-            style="flex:1;min-width:140px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:.7rem 1rem;color:#e6edf3;font-size:1rem">
-            <button onclick="updatePlayerProfile()" style="padding:.7rem 1.5rem;border-radius:10px;background:#7b2fbe;color:#fff;font-weight:600;border:none;cursor:pointer">Mettre à jour</button>
-        </div>
-
-        <div class="room-actions">
-            <button class="btn-launch" id="btn-launch" onclick="launchGame()" disabled>⚔️ Lancer la bataille</button>
-            <button class="btn-leave" onclick="leaveRoom()">✕ Quitter</button>
-        </div>
+<!-- ════ ARENA ════ -->
+<div id="arena" class="screen">
+  <canvas id="arena-canvas"></canvas>
+  <div class="hud">
+    <div class="hud-left">
+      <div class="hud-timer" id="hud-timer">3:00</div>
+      <div class="hud-score">🏆 <strong id="hud-mypts">0</strong> pts</div>
     </div>
-
-    <!-- ════ ARENA ════ -->
-    <div id="arena" class="screen">
-        <canvas id="arena-canvas"></canvas>
-
-        <div class="hud">
-            <div class="hud-left">
-                <div class="hud-timer" id="hud-timer">3:00</div>
-                <div class="hud-score" id="hud-score">🏆 <strong id="hud-mypts">0</strong> pts</div>
-            </div>
-            <div class="hud-players" id="hud-players"></div>
-        </div>
-
-        <div id="joystick-area">
-            <div id="joystick-base">
-                <div id="joystick-knob"></div>
-            </div>
-        </div>
-
-        <div id="question-overlay">
-            <div class="question-card" id="question-card">
-                <div class="duel-info">
-                    <span id="q-attacker">😀 toi</span>
-                    <span class="vs">⚔️ VS</span>
-                    <span id="q-defender">😎 adversaire</span>
-                </div>
-                <div class="q-text" id="q-text">Question…</div>
-                <div class="q-choices" id="q-choices"></div>
-                <div class="q-result" id="q-result"></div>
-                <div class="q-tip" id="q-tip"></div>
-                <button class="q-close-btn" id="q-close-btn" style="display:none" onclick="closeQuestion()">Continuer</button>
-            </div>
-        </div>
+    <div class="hud-players" id="hud-players"></div>
+  </div>
+  <div id="joystick-area">
+    <div id="joystick-base"><div id="joystick-knob"></div></div>
+  </div>
+  <div id="question-overlay">
+    <div class="question-card">
+      <div class="duel-info">
+        <span id="q-attacker">⚔️</span>
+        <span class="vs">⚔️ VS</span>
+        <span id="q-defender">🛡️</span>
+      </div>
+      <div class="q-text" id="q-text">Question…</div>
+      <div class="q-choices" id="q-choices"></div>
+      <div class="q-result" id="q-result"></div>
+      <div class="q-tip" id="q-tip"></div>
+      <button class="q-close-btn" id="q-close-btn" style="display:none" onclick="closeQuestion()">Continuer →</button>
     </div>
+  </div>
+</div>
 
-    <!-- ════ END ════ -->
-    <div id="end-screen" class="screen">
-        <div class="winner-emoji" id="end-emoji">🏆</div>
-        <h2 id="end-title">Fin de la bataille !</h2>
-        <div class="end-podium" id="end-podium"></div>
-        <button class="btn-replay" onclick="resetGame()">🔄 Nouvelle arène</button>
+<!-- ════ SPECTATE ════ -->
+<div id="spectate-screen" class="screen">
+  <div class="hud" style="position:relative;background:#161b22;border-bottom:1px solid rgba(255,255,255,0.06)">
+    <div class="hud-left">
+      <div class="hud-timer" id="spec-timer">—</div>
+      <div style="font-size:.85rem;color:#8b949e">Tableau spectateur</div>
     </div>
+    <div id="spec-players" class="hud-players"></div>
+  </div>
+  <div id="spec-content" style="flex:1;display:flex;align-items:center;justify-content:center;padding:2rem">
+    <div class="player-wait">
+      <div class="big">📺</div>
+      <div>En attente de la partie…</div>
+      <div style="font-size:.85rem">Le maître lance la partie depuis son appareil</div>
+    </div>
+  </div>
+</div>
 
-    <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js">
-    </script>
-    <script>
-        // ══════════════════════════════════════════════
-        // QUESTIONS (réutilisées et enrichies)
-        // ══════════════════════════════════════════════
-        const QUESTION_BANK = [
-            // 6e
-            { theme: "conjugaison", q: "« Les enfants … dans la cour. » (présent)", choices: ["jouent", "joues", "joue",
-                    "jouez"
-                ], correct: 0 },
-            { theme: "conjugaison", q: "« Tu … ton cartable. » (présent)", choices: ["prend", "prends", "prendes",
-                    "prendre"
-                ], correct: 1 },
-            { theme: "conjugaison", q: "« Hier, je … une pomme. » (imparfait)", choices: ["mangeais", "mangeait",
-                    "mangeaient", "mangea"
-                ], correct: 0 },
-            { theme: "conjugaison", q: "« Elle … ses clés. » (passé composé)", choices: ["a perdu", "est perdu",
-                    "avait perdu", "perdait"
-                ], correct: 0 },
-            { theme: "conjugaison", q: "« Demain, nous … à Paris. » (futur)", choices: ["allons", "irons", "allions",
-                    "allaient"
-                ], correct: 1 },
-            { theme: "nature", q: "Nature de « rapidement » : « Il court rapidement. »", choices: ["Adjectif", "Adverbe",
-                    "Verbe", "Nom"
-                ], correct: 1 },
-            { theme: "nature", q: "Dans « une belle maison », l'adjectif est :", choices: ["une", "belle", "maison",
-                    "Dans"
-                ], correct: 1 },
-            { theme: "nature", q: "Fonction de « le chien » : « Le chien aboie. »", choices: ["COD", "Sujet", "Attribut",
-                    "CC lieu"
-                ], correct: 1 },
-            { theme: "accord", q: "Phrase correctement accordée :", choices: ["Les filles est heureuses",
-                    "Les filles sont heureuses", "Les fille sont heureuses", "Les filles sont heureux"
-                ], correct: 1 },
-            { theme: "accord", q: "« un vent … » (bon accord)", choices: ["froid", "froide", "froids", "froides"],
-                correct: 0 },
-            { theme: "ortho", q: "Bonne orthographe :", choices: ["beaucoup", "baucoup", "beaucoups", "beauccoup"],
-                correct: 0 },
-            { theme: "ortho", q: "« Il … froid aujourd'hui. »", choices: ["fais", "fait", "fes", "fée"], correct: 1 },
-            { theme: "ortho", q: "Bonne orthographe :", choices: ["appartement", "appertement", "apartement",
-                    "appaetement"
-                ], correct: 0 },
-            // 5e
-            { theme: "conjugaison", q: "« Quand j'étais petit, je … souvent. » (rire)", choices: ["riais", "riait",
-                    "riions", "rièrent"
-                ], correct: 0 },
-            { theme: "conjugaison", q: "Mode de « Sois sage ! »", choices: ["Indicatif", "Impératif", "Subjonctif",
-                    "Infinitif"
-                ], correct: 1 },
-            { theme: "conjugaison", q: "« Il … avant que je parte. » (plus-que-parfait)", choices: ["finissait",
-                    "aura fini", "avait fini", "eut fini"
-                ], correct: 2 },
-            { theme: "nature", q: "Nature de « que » : « Je crois que tu as raison. »", choices: [
-                    "Pronom relatif", "Conjonction de subordination", "Adverbe", "Déterminant"
-                ], correct: 1 },
-            { theme: "nature", q: "COI dans « Il lui parle. »", choices: ["Il", "lui", "parle", "—"], correct: 1 },
-            { theme: "accord", q: "« Les robes qu'elle a … »", choices: ["cousues", "cousu", "cousus", "cousu·e·s"],
-                correct: 0 },
-            { theme: "ortho", q: "« … il pleut, … je reste. »", choices: ["Si / si", "S'il / alors", "S'y / si",
-                    "Si / aussi"
-                ], correct: 1 },
-            // 4e / 3e
-            { theme: "conjugaison", q: "« Il faut que tu … tes devoirs. » (subjonctif)", choices: ["fais", "feras",
-                    "fasses", "ferais"
-                ], correct: 2 },
-            { theme: "conjugaison", q: "Mode de « Je voudrais partir. »", choices: ["Indicatif", "Conditionnel",
-                    "Subjonctif", "Impératif"
-                ], correct: 1 },
-            { theme: "conjugaison", q: "« Il … la vérité. » (passé simple)", choices: ["disait", "dit", "dirait",
-                    "dise"
-                ], correct: 1 },
-            { theme: "voix", q: "Voix de « Le gâteau a été mangé par les élèves. »", choices: ["Active", "Passive",
-                    "Pronominale", "—"
-                ], correct: 1 },
-            { theme: "voix", q: "Active de « La porte est ouverte par le vent. »", choices: [
-                    "Le vent ouvre la porte", "La porte ouvre le vent", "La porte est ouverte", "On ouvre la porte"
-                ], correct: 0 },
-            { theme: "accord", q: "« Elles sont … » (partir)", choices: ["parti", "parties", "partis", "partie"],
-                correct: 1 },
-            { theme: "phrase", q: "Subordonnée dans « Bien qu'il soit tard, il travaille. »", choices: ["Relative",
-                    "C. de temps", "C. de concession", "C. de cause"
-                ], correct: 2 },
-            { theme: "temps", q: "Valeur de l'imparfait : « Il lisait chaque soir. »", choices: ["Action ponctuelle",
-                    "Habitude passée", "Action récente", "Futur proche"
-                ], correct: 1 },
-            { theme: "temps", q: "Valeur du présent : « César traverse le Rubicon en 49 av. J.-C. »", choices: [
-                    "Présent d'énonciation", "Présent de vérité générale", "Présent historique",
-                    "Présent de narration"
-                ], correct: 2 },
-        ];
+<!-- ════ PLAYER WAIT (before game starts) ════ -->
+<div id="player-wait-screen" class="screen">
+  <div class="player-wait" style="height:100vh">
+    <div class="big">⏳</div>
+    <div id="pw-name" style="font-weight:700;font-size:1.2rem">—</div>
+    <div>En attente du lancement…</div>
+    <div style="font-size:.8rem;color:#8b949e">Le maître du jeu va démarrer la partie</div>
+  </div>
+</div>
 
-        function shuffleArray(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));
-                [a[i], a[j]] = [a[j], a[i]]; } return a; }
+<!-- ════ END ════ -->
+<div id="end-screen" class="screen">
+  <div id="end-emoji" style="font-size:4rem">🏆</div>
+  <h2 id="end-title">Fin de la bataille !</h2>
+  <div class="end-podium" id="end-podium"></div>
+  <button class="btn-replay" onclick="resetGame()">🔄 Nouvelle arène</button>
+</div>
 
-        // ══════════════════════════════════════════════
-        // PEERJS NETWORKING
-        // ══════════════════════════════════════════════
-        let peer = null;
-        let connections = {};
-        let isHost = false;
-        let roomId = '';
-        let myId = '';
-        let myEmoji = '😀';
-        let myName = 'Toi';
-        let gameState = null;
-        let gameInterval = null;
-        let canvas, ctx;
-        let W, H;
-        let joystickActive = false;
-        let joystickDX = 0,
-            joystickDY = 0;
-        let animationId = null;
-        let localPos = { x: 0, y: 0 };
-        let questionActive = false;
-        let myAnswered = false;
-        let myStealCooldown = {}; // track who we've stolen from
-        let gameOver = false;
+<script>
+// ══════════════════════════════════════════════
+//  QUESTIONS
+// ══════════════════════════════════════════════
+const QUESTION_BANK = [
+  {theme:"conjugaison", q:"« Les enfants … dans la cour. » (présent)", choices:["jouent","joues","joue","jouez"], correct:0},
+  {theme:"conjugaison", q:"« Tu … ton cartable. » (présent)", choices:["prend","prends","prendes","prendre"], correct:1},
+  {theme:"conjugaison", q:"« Hier, je … une pomme. » (imparfait)", choices:["mangeais","mangeait","mangeaient","mangea"], correct:0},
+  {theme:"conjugaison", q:"« Elle … ses clés. » (passé composé)", choices:["a perdu","est perdu","avait perdu","perdait"], correct:0},
+  {theme:"conjugaison", q:"« Demain, nous … à Paris. » (futur)", choices:["allons","irons","allions","allaient"], correct:1},
+  {theme:"nature", q:"Nature de « rapidement » : « Il court rapidement. »", choices:["Adjectif","Adverbe","Verbe","Nom"], correct:1},
+  {theme:"nature", q:"Dans « une belle maison », l'adjectif est :", choices:["une","belle","maison","Dans"], correct:1},
+  {theme:"nature", q:"Fonction de « le chien » : « Le chien aboie. »", choices:["COD","Sujet","Attribut","CC lieu"], correct:1},
+  {theme:"accord", q:"Phrase correctement accordée :", choices:["Les filles est heureuses","Les filles sont heureuses","Les fille sont heureuses","Les filles sont heureux"], correct:1},
+  {theme:"accord", q:"« un vent … » (bon accord)", choices:["froid","froide","froids","froides"], correct:0},
+  {theme:"ortho", q:"Bonne orthographe :", choices:["beaucoup","baucoup","beaucoups","beauccoup"], correct:0},
+  {theme:"ortho", q:"« Il … froid aujourd'hui. »", choices:["fais","fait","fes","fée"], correct:1},
+  {theme:"conjugaison", q:"« Quand j'étais petit, je … souvent. » (rire)", choices:["riais","riait","riions","rièrent"], correct:0},
+  {theme:"conjugaison", q:"Mode de « Sois sage ! »", choices:["Indicatif","Impératif","Subjonctif","Infinitif"], correct:1},
+  {theme:"conjugaison", q:"« Il … avant que je parte. » (plus-que-parfait, finir)", choices:["finissait","aura fini","avait fini","eut fini"], correct:2},
+  {theme:"nature", q:"Nature de « que » : « Je crois que tu as raison. »", choices:["Pronom relatif","Conj. de subordination","Adverbe","Déterminant"], correct:1},
+  {theme:"accord", q:"« Les robes qu'elle a … »", choices:["cousues","cousu","cousus","cousu·e·s"], correct:0},
+  {theme:"conjugaison", q:"« Il faut que tu … tes devoirs. » (subjonctif, faire)", choices:["fais","feras","fasses","ferais"], correct:2},
+  {theme:"conjugaison", q:"Mode de « Je voudrais partir. »", choices:["Indicatif","Conditionnel","Subjonctif","Impératif"], correct:1},
+  {theme:"conjugaison", q:"« Il … la vérité. » (passé simple, dire)", choices:["disait","dit","dirait","dise"], correct:1},
+  {theme:"voix", q:"Voix de « Le gâteau a été mangé par les élèves. »", choices:["Active","Passive","Pronominale","—"], correct:1},
+  {theme:"voix", q:"Forme active de « La porte est ouverte par le vent. »", choices:["Le vent ouvre la porte","La porte ouvre le vent","La porte est ouverte","On ouvre la porte"], correct:0},
+  {theme:"accord", q:"« Elles sont … » (partir)", choices:["parti","parties","partis","partie"], correct:1},
+  {theme:"phrase", q:"Subordonnée de « Bien qu'il soit tard, il travaille. »", choices:["Relative","C. de temps","C. de concession","C. de cause"], correct:2},
+  {theme:"temps", q:"Valeur de l'imparfait : « Il lisait chaque soir. »", choices:["Action ponctuelle","Habitude passée","Action récente","Futur proche"], correct:1},
+  {theme:"temps", q:"Valeur du présent : « César traverse le Rubicon en 49 av. J.-C. »", choices:["Présent d'énonciation","Présent de vérité générale","Présent historique","Présent de narration"], correct:2},
+  {theme:"temps", q:"Concordance : « Il pensait que tu … raison. »", choices:["as","avais","auras","aies"], correct:1, tip:"Principale au passé → subordonnée à l'imparfait"},
+  {theme:"phrase", q:"Connecteur de cause :", choices:["donc","cependant","parce que","afin que"], correct:2},
+  {theme:"nature", q:"Nature de « dont » : « Le livre dont je parle… »", choices:["Conjonction","Pronom relatif","Adverbe","Préposition"], correct:1},
+  {theme:"ortho", q:"Bonne orthographe :", choices:["appartement","appertement","apartement","appaetement"], correct:0},
+];
 
-        // ── DOM refs ──
-        const $ = id => document.getElementById(id);
-        const landing = $('landing');
-        const roomScreen = $('room-screen');
-        const arena = $('arena');
-        const endScreen = $('end-screen');
-        const roomCodeDisplay = $('room-code-display');
-        const roomPlayers = $('room-players');
-        const roomPlayerCount = $('room-player-count');
-        const emojiPicker = $('emoji-picker');
-        const playerNameInput = $('player-name-input');
-        const btnLaunch = $('btn-launch');
-        const canvasEl = $('arena-canvas');
-        const hudTimer = $('hud-timer');
-        const hudMyPts = $('hud-mypts');
-        const hudPlayers = $('hud-players');
-        const joystickBase = $('joystick-base');
-        const joystickKnob = $('joystick-knob');
-        const questionOverlay = $('question-overlay');
-        const qAttacker = $('q-attacker');
-        const qDefender = $('q-defender');
-        const qText = $('q-text');
-        const qChoices = $('q-choices');
-        const qResult = $('q-result');
-        const qTip = $('q-tip');
-        const qCloseBtn = $('q-close-btn');
-        const endEmoji = $('end-emoji');
-        const endTitle = $('end-title');
-        const endPodium = $('end-podium');
+function shuffleArray(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
-        // ── Emoji selection ──
-        let selectedEmoji = '😀';
-        emojiPicker.querySelectorAll('button').forEach(btn => {
-            btn.addEventListener('click', () => {
-                emojiPicker.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                selectedEmoji = btn.dataset.emoji;
-                myEmoji = selectedEmoji;
-                if (peer && myId) updatePlayerProfile();
-            });
-        });
-        // select first by default
-        emojiPicker.querySelector('button')?.classList.add('selected');
+// ══════════════════════════════════════════════
+//  BROADCASTCHANNEL NETWORK
+//  Tous les onglets sur le même appareil / même
+//  navigateur se voient via BroadcastChannel.
+//  Pour cross-devices sur même WiFi : on utilise
+//  localStorage partagé via polling (fallback).
+//  Le "canal" est la clé localStorage + BC.
+// ══════════════════════════════════════════════
+const CHANNEL = "grammaire_arena_v3";
+let bc = null;
+let lastMsgTs = 0;
 
-        // ── Screen navigation ──
-        function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            $(id).classList.add('active');
+function initChannel(){
+  try{
+    bc = new BroadcastChannel(CHANNEL);
+    bc.onmessage = e => dispatch(e.data);
+  }catch(e){ bc = null; }
+  // localStorage polling pour cross-tabs/cross-devices
+  setInterval(pollLS, 300);
+}
+
+function pollLS(){
+  try{
+    const raw = localStorage.getItem(CHANNEL);
+    if(!raw) return;
+    const obj = JSON.parse(raw);
+    if(obj._ts && obj._ts > lastMsgTs){
+      lastMsgTs = obj._ts;
+      dispatch(obj);
+    }
+  }catch(e){}
+}
+
+function broadcast(msg){
+  const obj = {...msg, _ts: Date.now()};
+  try{ localStorage.setItem(CHANNEL, JSON.stringify(obj)); }catch(e){}
+  if(bc) bc.postMessage(obj);
+  // also handle locally for master
+  if(isMaster) dispatch(obj);
+}
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let isMaster = false;
+let isSpectator = false;
+let myId = '';
+let myName = 'Joueur';
+let myEmoji = '😀';
+let selectedEmoji = '😀';
+
+let gameState = null;   // canonical state, master owns it
+let gameInterval = null;
+let animationId = null;
+let canvas, ctx, W, H;
+let joystickDX = 0, joystickDY = 0, joystickActive = false;
+let questionActive = false;
+let myAnswered = false;
+let duelData = null;
+let gameOver = false;
+
+const $ = id => document.getElementById(id);
+
+// ══════════════════════════════════════════════
+//  MESSAGE DISPATCH
+// ══════════════════════════════════════════════
+function dispatch(msg){
+  if(!msg || !msg.type) return;
+  // ignore own messages if not master
+  switch(msg.type){
+
+    case 'PLAYER_JOIN':
+      if(isMaster){
+        if(!gameState) gameState = createInitialState();
+        if(!gameState.players[msg.id]){
+          gameState.players[msg.id] = {
+            id:msg.id, name:msg.name, emoji:msg.emoji,
+            pts:30, x:.1+Math.random()*.8, y:.1+Math.random()*.8,
+            alive:true, streak:0, answered:false, blocked:false
+          };
+        } else {
+          gameState.players[msg.id].name = msg.name;
+          gameState.players[msg.id].emoji = msg.emoji;
         }
+        broadcast({type:'STATE_SYNC', state:gameState});
+        updateRoomUI();
+      }
+      break;
 
-        // ── Create Room (Host) ──
-        function createRoom() {
-            isHost = true;
-            const id = 'arena-' + Math.random().toString(36).substring(2, 6).toUpperCase();
-            roomId = id;
-            peer = new Peer(id, {
-                debug: 0,
-                config: { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] }
-            });
-            peer.on('open', (pid) => {
-                myId = pid;
-                roomCodeDisplay.textContent = id;
-                showScreen('room-screen');
-                updateRoomUI();
-                btnLaunch.disabled = true;
-                // wait for players
-                peer.on('connection', (conn) => {
-                    connections[conn.peer] = conn;
-                    conn.on('data', (data) => handlePeerData(conn.peer, data));
-                    conn.on('close', () => { delete connections[conn.peer];
-                        updateRoomUI(); });
-                    updateRoomUI();
-                });
-                // announce self
-                broadcastToRoom({ type: 'player_join', id: myId, name: myName || 'Toi', emoji: myEmoji });
-                // host auto-ready
-                setTimeout(() => { btnLaunch.disabled = Object.keys(connections).length === 0; }, 300);
-            });
-            peer.on('error', (e) => { console.warn('Peer error:', e); });
-        }
-
-        // ── Join Room ──
-        function showJoin() {
-            const code = prompt('🔑 Entrez le code de l\'arène :');
-            if (!code) return;
-            joinRoom(code.trim().toUpperCase());
-        }
-
-        function joinRoom(code) {
-            roomId = code;
-            isHost = false;
-            peer = new Peer({
-                debug: 0,
-                config: { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] }
-            });
-            peer.on('open', (pid) => {
-                myId = pid;
-                roomCodeDisplay.textContent = code;
-                showScreen('room-screen');
-                // connect to host
-                const conn = peer.connect(code);
-                conn.on('open', () => {
-                    connections[code] = conn;
-                    conn.on('data', (data) => handlePeerData(code, data));
-                    conn.on('close', () => { delete connections[code];
-                        updateRoomUI(); });
-                    broadcastToRoom({ type: 'player_join', id: myId, name: myName || 'Toi', emoji: myEmoji });
-                    updateRoomUI();
-                });
-                conn.on('error', (e) => { console.warn('Connection error:', e);
-                    alert('Impossible de rejoindre l\'arène. Vérifie le code.'); });
-                peer.on('connection', (c) => {
-                    // other players connecting to us (if any)
-                    connections[c.peer] = c;
-                    c.on('data', (data) => handlePeerData(c.peer, data));
-                    c.on('close', () => { delete connections[c.peer];
-                        updateRoomUI(); });
-                    updateRoomUI();
-                });
-                btnLaunch.disabled = true;
-            });
-            peer.on('error', (e) => { console.warn('Peer error:', e);
-                alert('Erreur de connexion. Vérifie le code.'); });
-        }
-
-        // ── Spectate ──
-        function spectate() {
-            const code = prompt('👁️ Code de l\'arène à regarder :');
-            if (!code) return;
-            // spectate as a passive observer
-            roomId = code;
-            isHost = false;
-            peer = new Peer({
-                debug: 0,
-                config: { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] }
-            });
-            peer.on('open', (pid) => {
-                myId = pid;
-                myName = '👁️ Spectateur';
-                roomCodeDisplay.textContent = code;
-                showScreen('room-screen');
-                const conn = peer.connect(code);
-                conn.on('open', () => {
-                    connections[code] = conn;
-                    conn.on('data', (data) => handlePeerData(code, data));
-                    conn.on('close', () => { delete connections[code];
-                        updateRoomUI(); });
-                    broadcastToRoom({ type: 'spectator_join', id: myId });
-                    updateRoomUI();
-                });
-                conn.on('error', () => { alert('Impossible de se connecter en spectateur.'); });
-                btnLaunch.disabled = true;
-            });
-        }
-
-        // ── Broadcast ──
-        function broadcastToRoom(msg) {
-            const data = { ...msg, from: myId };
-            Object.values(connections).forEach(conn => {
-                try { conn.send(data); } catch (e) {}
-            });
-            // also handle locally if we're the host
-            if (isHost) handlePeerData(myId, data);
-        }
-
-        // ── Handle incoming data ──
-        function handlePeerData(senderId, data) {
-            if (!data || !data.type) return;
-            switch (data.type) {
-                case 'player_join':
-                    if (isHost) {
-                        // store player info
-                        if (!gameState) gameState = createInitialState();
-                        if (!gameState.players[data.id]) {
-                            gameState.players[data.id] = {
-                                id: data.id,
-                                name: data.name || 'Anonyme',
-                                emoji: data.emoji || '😀',
-                                pts: 30,
-                                x: Math.random() * 0.8 + 0.1,
-                                y: Math.random() * 0.8 + 0.1,
-                                alive: true,
-                                streak: 0,
-                                answered: false,
-                                blocked: false
-                            };
-                            // assign spawn position
-                            const p = gameState.players[data.id];
-                            p.x = 0.1 + Math.random() * 0.8;
-                            p.y = 0.1 + Math.random() * 0.8;
-                        }
-                        // broadcast updated state
-                        broadcastToRoom({ type: 'state_sync', state: gameState });
-                        updateRoomUI();
-                    }
-                    break;
-
-                case 'spectator_join':
-                    // just update UI
-                    updateRoomUI();
-                    break;
-
-                case 'state_sync':
-                    if (!isHost) {
-                        gameState = data.state;
-                        updateRoomUI();
-                        if (gameState.started) {
-                            enterArena();
-                        }
-                    }
-                    break;
-
-                case 'player_update':
-                    if (isHost && gameState && gameState.players[data.id]) {
-                        const p = gameState.players[data.id];
-                        p.x = data.x;
-                        p.y = data.y;
-                        p.emoji = data.emoji || p.emoji;
-                        p.name = data.name || p.name;
-                        // check collisions
-                        checkCollisions(data.id);
-                    }
-                    break;
-
-                case 'player_answer':
-                    if (isHost && questionActive) {
-                        handleAnswer(senderId, data.choiceIndex);
-                    }
-                    break;
-
-                case 'question_close':
-                    if (isHost) {
-                        questionActive = false;
-                        broadcastToRoom({ type: 'question_closed' });
-                    }
-                    break;
-
-                case 'question_closed':
-                    if (!isHost) {
-                        questionActive = false;
-                        questionOverlay.classList.remove('show');
-                    }
-                    break;
-
-                case 'game_start':
-                    if (!isHost) {
-                        gameState = data.state;
-                        enterArena();
-                    }
-                    break;
-
-                case 'game_end':
-                    gameOver = true;
-                    if (isHost) clearInterval(gameInterval);
-                    showEndScreen(data.results);
-                    break;
-
-                case 'ping':
-                    // respond to host ping
-                    break;
-
-                default:
-                    break;
-            }
-        }
-
-        // ── Room UI ──
-        function updateRoomUI() {
-            const players = gameState ? Object.values(gameState.players) : [];
-            const allIds = Object.keys(connections);
-            // show all connected players (including host if not in gameState yet)
-            const displayPlayers = [...players];
-            // add pending connections not yet in gameState
-            allIds.forEach(id => {
-                if (!displayPlayers.find(p => p.id === id)) {
-                    displayPlayers.push({ id, name: '…', emoji: '⏳', pts: 0, alive: true });
-                }
-            });
-            // add self if not present
-            if (!displayPlayers.find(p => p.id === myId)) {
-                displayPlayers.push({ id: myId, name: myName || 'Toi', emoji: myEmoji, pts: 0, alive: true });
-            }
-            roomPlayerCount.textContent = displayPlayers.length;
-            roomPlayers.innerHTML = displayPlayers.map(p => `
-                <div class="player-tag">
-                    <span class="emoji">${p.emoji || '😀'}</span>
-                    <span class="name">${p.name || 'Anonyme'}</span>
-                    ${p.id === myId ? ' <span style="font-size:.7rem;color:#f5c842">(toi)</span>' : ''}
-                    ${p.id === roomId ? ' 👑' : ''}
-                </div>
-            `).join('');
-
-            if (isHost) {
-                const hasPlayers = displayPlayers.length > 1; // at least host + 1 other
-                btnLaunch.disabled = !hasPlayers || (gameState && gameState.started);
-            }
-            // update room code
-            roomCodeDisplay.textContent = roomId || '••••';
-        }
-
-        function updatePlayerProfile() {
-            const name = playerNameInput.value.trim() || 'Toi';
-            myName = name;
-            myEmoji = selectedEmoji;
-            broadcastToRoom({ type: 'player_join', id: myId, name: myName, emoji: myEmoji });
-            if (isHost && gameState && gameState.players[myId]) {
-                gameState.players[myId].name = myName;
-                gameState.players[myId].emoji = myEmoji;
-                broadcastToRoom({ type: 'state_sync', state: gameState });
-            }
-            updateRoomUI();
-        }
-
-        // ── Launch Game ──
-        function launchGame() {
-            if (!isHost) return;
-            if (!gameState) gameState = createInitialState();
-            gameState.started = true;
-            gameState.startTime = Date.now();
-            gameState.duration = 180; // 3 minutes
-            gameState.players[myId] = gameState.players[myId] || { id: myId, name: myName, emoji: myEmoji, pts: 30, x: 0.5,
-                y: 0.5, alive: true, streak: 0, answered: false, blocked: false };
-            // assign random positions
-            Object.values(gameState.players).forEach((p, i) => {
-                p.x = 0.1 + Math.random() * 0.8;
-                p.y = 0.1 + Math.random() * 0.8;
-                p.pts = 30;
-                p.alive = true;
-                p.streak = 0;
-                p.answered = false;
-                p.blocked = false;
-            });
-            broadcastToRoom({ type: 'game_start', state: gameState });
+    case 'STATE_SYNC':
+      if(!isMaster){
+        gameState = msg.state;
+        updateRoomUI();
+        if(gameState && gameState.started && !gameOver){
+          // transition to correct screen
+          if(isSpectator){
+            showScreen('spectate-screen');
+            syncSpectator();
+          } else {
+            // player enters arena
             enterArena();
-            // start timer
-            let elapsed = 0;
-            const tick = () => {
-                elapsed++;
-                const remaining = Math.max(0, gameState.duration - elapsed);
-                const mins = Math.floor(remaining / 60);
-                const secs = remaining % 60;
-                hudTimer.textContent = `${mins}:${secs.toString().padStart(2,'0')}`;
-                if (remaining <= 0) {
-                    clearInterval(gameInterval);
-                    endGame();
-                }
-                // update scores in HUD
-                updateHUD();
-                // sync state periodically
-                if (elapsed % 2 === 0) {
-                    broadcastToRoom({ type: 'state_sync', state: gameState });
-                }
-            };
-            tick();
-            gameInterval = setInterval(tick, 1000);
-            btnLaunch.disabled = true;
+          }
         }
+        if(gameState && gameState.started) updateHUD();
+        if(gameState && gameState.started && isSpectator) syncSpectator();
+      }
+      break;
 
-        function createInitialState() {
-            return {
-                started: false,
-                players: {},
-                startTime: 0,
-                duration: 180,
-                questions: shuffleArray([...QUESTION_BANK]),
-                qIndex: 0,
-                collisionCooldown: {},
-                lastCollision: {}
-            };
-        }
+    case 'PLAYER_UPDATE':
+      if(isMaster && gameState && gameState.players[msg.id]){
+        const p = gameState.players[msg.id];
+        p.x = msg.x; p.y = msg.y;
+        p.name = msg.name || p.name;
+        p.emoji = msg.emoji || p.emoji;
+        checkCollisions(msg.id);
+      }
+      break;
 
-        // ── Enter Arena ──
-        function enterArena() {
-            showScreen('arena');
-            canvas = canvasEl;
-            ctx = canvas.getContext('2d');
-            resizeCanvas();
-            window.addEventListener('resize', resizeCanvas);
-            setupJoystick();
-            // set initial local pos
-            if (gameState && gameState.players[myId]) {
-                localPos.x = gameState.players[myId].x || 0.5;
-                localPos.y = gameState.players[myId].y || 0.5;
-            }
-            questionActive = false;
-            questionOverlay.classList.remove('show');
-            gameOver = false;
-            updateHUD();
-            if (animationId) cancelAnimationFrame(animationId);
-            gameLoop();
-        }
+    case 'PLAYER_ANSWER':
+      if(isMaster && questionActive) handleAnswer(msg.id, msg.choiceIndex);
+      break;
 
-        function resizeCanvas() {
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = rect.width * devicePixelRatio;
-            canvas.height = rect.height * devicePixelRatio;
-            W = canvas.width;
-            H = canvas.height;
-            canvas.style.width = rect.width + 'px';
-            canvas.style.height = rect.height + 'px';
-        }
+    case 'SHOW_QUESTION':
+      if(!isMaster){
+        duelData = msg.duel;
+        questionActive = true;
+        myAnswered = false;
+        showQuestionUI(msg.duel);
+      }
+      break;
 
-        // ── Joystick ──
-        function setupJoystick() {
-            const base = joystickBase;
-            const knob = joystickKnob;
-            let dragging = false;
-            const centerX = base.offsetWidth / 2;
-            const centerY = base.offsetHeight / 2;
-            const maxDist = base.offsetWidth / 2 - knob.offsetWidth / 2;
+    case 'DUEL_RESULT':
+      if(!isMaster) showDuelResult(msg);
+      break;
 
-            function getPos(e) {
-                const rect = base.getBoundingClientRect();
-                const touch = e.touches ? e.touches[0] : e;
-                return {
-                    x: (touch.clientX - rect.left) / rect.width,
-                    y: (touch.clientY - rect.top) / rect.height
-                };
-            }
+    case 'QUESTION_CLOSED':
+      if(!isMaster){
+        questionActive = false;
+        $('question-overlay').classList.remove('show');
+      }
+      break;
 
-            function moveKnob(pos) {
-                let dx = pos.x - 0.5;
-                let dy = pos.y - 0.5;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist > 0.5) {
-                    dx = dx / dist * 0.5;
-                    dy = dy / dist * 0.5;
-                }
-                const px = dx * base.offsetWidth;
-                const py = dy * base.offsetHeight;
-                knob.style.transform = `translate(calc(-50% + ${px}px), calc(-50% + ${py}px))`;
-                joystickDX = dx * 2;
-                joystickDY = dy * 2;
-                if (dist > 0.05) {
-                    knob.classList.add('active');
-                } else {
-                    knob.classList.remove('active');
-                    joystickDX = 0;
-                    joystickDY = 0;
-                }
-                joystickActive = dist > 0.05;
-            }
+    case 'GAME_END':
+      gameOver = true;
+      if(gameInterval) clearInterval(gameInterval);
+      if(animationId) cancelAnimationFrame(animationId);
+      renderEndScreen(msg.results);
+      break;
 
-            function handleStart(e) {
-                e.preventDefault();
-                dragging = true;
-                const pos = getPos(e);
-                moveKnob(pos);
-            }
+    case 'TIMER_TICK':
+      if(!isMaster){
+        $('hud-timer').textContent = msg.display;
+        if(isSpectator) $('spec-timer').textContent = msg.display;
+        updateHUD();
+      }
+      break;
+  }
+}
 
-            function handleMove(e) {
-                e.preventDefault();
-                if (!dragging) return;
-                const pos = getPos(e);
-                moveKnob(pos);
-            }
+// ══════════════════════════════════════════════
+//  SCREENS
+// ══════════════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+}
 
-            function handleEnd(e) {
-                e.preventDefault();
-                dragging = false;
-                knob.style.transform = 'translate(-50%, -50%)';
-                joystickDX = 0;
-                joystickDY = 0;
-                joystickActive = false;
-                knob.classList.remove('active');
-            }
+// ══════════════════════════════════════════════
+//  LANDING ACTIONS
+// ══════════════════════════════════════════════
+function createRoom(){
+  isMaster = true;
+  isSpectator = false;
+  myId = 'master';
+  myName = 'Maître';
+  gameState = createInitialState();
+  $('role-badge').textContent = '👑 Maître';
+  $('room-url-text').textContent = window.location.href;
+  $('player-name-input').value = 'Maître';
+  showScreen('room-screen');
+  updateRoomUI();
+  broadcast({type:'STATE_SYNC', state:gameState});
+}
 
-            base.addEventListener('mousedown', handleStart);
-            document.addEventListener('mousemove', handleMove);
-            document.addEventListener('mouseup', handleEnd);
-            base.addEventListener('touchstart', handleStart, { passive: false });
-            document.addEventListener('touchmove', handleMove, { passive: false });
-            document.addEventListener('touchend', handleEnd, { passive: false });
-            document.addEventListener('touchcancel', handleEnd, { passive: false });
-        }
+function showJoin(){
+  isMaster = false;
+  isSpectator = false;
+  myId = 'p_' + Math.random().toString(36).slice(2,7);
+  myName = 'Joueur' + Math.floor(Math.random()*99);
+  $('role-badge').textContent = '🎮 Joueur';
+  $('room-url-text').textContent = window.location.href;
+  $('player-name-input').value = myName;
+  showScreen('room-screen');
+  broadcast({type:'PLAYER_JOIN', id:myId, name:myName, emoji:myEmoji});
+  $('btn-launch').style.display = 'none';
+}
 
-        // ── Game Loop ──
-        function gameLoop() {
-            if (!canvas) return;
-            ctx.clearRect(0, 0, W, H);
+function goSpectate(){
+  isMaster = false;
+  isSpectator = true;
+  myId = 'spec_' + Math.random().toString(36).slice(2,6);
+  $('role-badge').textContent = '👁️ Spectateur';
+  $('room-url-text').textContent = window.location.href;
+  $('player-name-input').value = 'Spectateur';
+  $('btn-launch').style.display = 'none';
+  showScreen('room-screen');
+  // try to get current state
+  broadcast({type:'PLAYER_JOIN', id:myId, name:'👁️ Spectateur', emoji:'👁️'});
+}
 
-            // Draw background grid
-            ctx.fillStyle = '#0a0e14';
-            ctx.fillRect(0, 0, W, H);
-            ctx.strokeStyle = 'rgba(255,255,255,0.03)';
-            ctx.lineWidth = 1;
-            const step = 60;
-            for (let x = 0; x <= W; x += step) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, H);
-                ctx.stroke();
-            }
-            for (let y = 0; y <= H; y += step) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(W, y);
-                ctx.stroke();
-            }
+function leaveRoom(){
+  gameState = null;
+  showScreen('landing');
+}
 
-            // Update local position from joystick
-            if (gameState && gameState.players[myId] && !gameOver && !questionActive) {
-                const speed = 0.008;
-                let dx = joystickDX * speed;
-                let dy = joystickDY * speed;
-                const p = gameState.players[myId];
-                let nx = p.x + dx;
-                let ny = p.y + dy;
-                nx = Math.max(0.05, Math.min(0.95, nx));
-                ny = Math.max(0.05, Math.min(0.95, ny));
-                p.x = nx;
-                p.y = ny;
-                localPos.x = nx;
-                localPos.y = ny;
-                // send update to host
-                if (!isHost) {
-                    broadcastToRoom({ type: 'player_update', id: myId, x: nx, y: ny, emoji: myEmoji, name: myName });
-                } else {
-                    // host handles locally
-                    broadcastToRoom({ type: 'player_update', id: myId, x: nx, y: ny, emoji: myEmoji, name: myName });
-                }
-            }
+// ══════════════════════════════════════════════
+//  EMOJI PICKER
+// ══════════════════════════════════════════════
+$('emoji-picker').querySelectorAll('button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    $('emoji-picker').querySelectorAll('button').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedEmoji = btn.dataset.emoji;
+    myEmoji = selectedEmoji;
+    if(!isMaster) broadcast({type:'PLAYER_JOIN', id:myId, name:myName, emoji:myEmoji});
+  });
+});
+$('emoji-picker').querySelector('button')?.classList.add('selected');
 
-            // Draw players
-            if (gameState) {
-                const players = Object.values(gameState.players);
-                players.forEach(p => {
-                    if (!p.alive) return;
-                    const x = p.x * W;
-                    const y = p.y * H;
-                    const radius = Math.min(W, H) * 0.035;
-                    // glow
-                    const grad = ctx.createRadialGradient(x, y, 0, x, y, radius * 2.5);
-                    grad.addColorStop(0, 'rgba(157,78,221,0.15)');
-                    grad.addColorStop(1, 'rgba(157,78,221,0)');
-                    ctx.fillStyle = grad;
-                    ctx.beginPath();
-                    ctx.arc(x, y, radius * 2.5, 0, Math.PI * 2);
-                    ctx.fill();
-                    // circle
-                    ctx.shadowColor = 'rgba(157,78,221,0.3)';
-                    ctx.shadowBlur = 20;
-                    ctx.beginPath();
-                    ctx.arc(x, y, radius, 0, Math.PI * 2);
-                    ctx.fillStyle = p.id === myId ? 'rgba(245,200,66,0.2)' : 'rgba(255,255,255,0.06)';
-                    ctx.fill();
-                    ctx.strokeStyle = p.id === myId ? '#f5c842' : 'rgba(255,255,255,0.15)';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                    ctx.shadowBlur = 0;
-                    // emoji
-                    ctx.font = `${radius * 1.4}px serif`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(p.emoji || '😀', x, y - 2);
-                    // name
-                    ctx.font = `${Math.max(10, radius * 0.6)}px sans-serif`;
-                    ctx.fillStyle = '#8b949e';
-                    ctx.fillText(p.name || '', x, y + radius + 18);
-                    // pts
-                    ctx.font = `${Math.max(10, radius * 0.5)}px sans-serif`;
-                    ctx.fillStyle = '#f5c842';
-                    ctx.fillText(`${p.pts} pts`, x, y + radius + 36);
-                });
-            }
+function updatePlayerProfile(){
+  const name = $('player-name-input').value.trim() || myName;
+  myName = name;
+  myEmoji = selectedEmoji;
+  if(isMaster && gameState){
+    if(!gameState.players[myId]) gameState.players[myId] = {id:myId,name:myName,emoji:myEmoji,pts:30,x:.5,y:.5,alive:true,streak:0,answered:false,blocked:false};
+    gameState.players[myId].name = myName;
+    gameState.players[myId].emoji = myEmoji;
+    broadcast({type:'STATE_SYNC', state:gameState});
+  } else {
+    broadcast({type:'PLAYER_JOIN', id:myId, name:myName, emoji:myEmoji});
+  }
+  updateRoomUI();
+}
 
-            // Show joystick hint only if not active
-            if (!joystickActive && !questionActive && !gameOver) {
-                ctx.font = '14px sans-serif';
-                ctx.fillStyle = 'rgba(255,255,255,0.15)';
-                ctx.textAlign = 'center';
-                ctx.fillText('👆 Déplace-toi avec le joystick', W / 2, H - 50);
-            }
+// ══════════════════════════════════════════════
+//  ROOM UI
+// ══════════════════════════════════════════════
+function updateRoomUI(){
+  if(!gameState){ $('room-player-count').textContent='0'; return; }
+  const players = Object.values(gameState.players);
+  $('room-player-count').textContent = players.length;
+  $('room-players').innerHTML = players.map(p=>`
+    <div class="player-tag">
+      <span class="emoji">${p.emoji}</span>
+      <span class="name">${p.name}</span>
+      ${p.id===myId?' <span style="font-size:.7rem;color:#f5c842">(toi)</span>':''}
+      ${p.id==='master'?' 👑':''}
+    </div>`).join('');
+  if(isMaster){
+    const realPlayers = players.filter(p=>!p.id.startsWith('spec_') && p.id!=='master');
+    $('btn-launch').disabled = realPlayers.length < 1;
+  }
+}
 
-            animationId = requestAnimationFrame(gameLoop);
-        }
+// ══════════════════════════════════════════════
+//  LAUNCH
+// ══════════════════════════════════════════════
+function launchGame(){
+  if(!isMaster) return;
+  if(!gameState.players['master']){
+    gameState.players['master'] = {id:'master',name:myName,emoji:myEmoji,pts:30,x:.5,y:.3,alive:true,streak:0,answered:false,blocked:false};
+  }
+  Object.values(gameState.players).forEach(p=>{
+    p.x=.1+Math.random()*.8; p.y=.1+Math.random()*.8; p.pts=30; p.alive=true; p.streak=0; p.answered=false; p.blocked=false;
+  });
+  gameState.started = true;
+  gameState.startTime = Date.now();
+  gameState.duration = 180;
+  broadcast({type:'STATE_SYNC', state:gameState});
+  enterArena();
+  startTimer();
+}
 
-        // ── HUD ──
-        function updateHUD() {
-            if (!gameState) return;
-            const me = gameState.players[myId];
-            if (me) {
-                hudMyPts.textContent = me.pts || 0;
-            }
-            const players = Object.values(gameState.players).filter(p => p.alive);
-            hudPlayers.innerHTML = players.map(p => `
-                <div class="hud-player">
-                    <span class="emoji">${p.emoji || '😀'}</span>
-                    <span class="name">${p.name || ''}</span>
-                    <span class="pts">${p.pts || 0}</span>
-                    ${p.id === myId ? ' ⭐' : ''}
-                </div>
-            `).join('');
-        }
+function createInitialState(){
+  return {started:false,players:{},startTime:0,duration:180,
+    questions:shuffleArray([...QUESTION_BANK]),qIndex:0,
+    collisionCooldown:{}};
+}
 
-        // ── Collision Detection (Host only) ──
-        const COLLISION_COOLDOWN = 3000; // ms
+// ══════════════════════════════════════════════
+//  TIMER (master only)
+// ══════════════════════════════════════════════
+function startTimer(){
+  let elapsed = 0;
+  const tick = ()=>{
+    elapsed++;
+    const rem = Math.max(0, gameState.duration - elapsed);
+    const mins = Math.floor(rem/60);
+    const secs = rem%60;
+    const display = `${mins}:${secs.toString().padStart(2,'0')}`;
+    $('hud-timer').textContent = display;
+    broadcast({type:'TIMER_TICK', display});
+    updateHUD();
+    if(elapsed%3===0) broadcast({type:'STATE_SYNC', state:gameState});
+    if(rem<=0){ clearInterval(gameInterval); endGame(); }
+  };
+  tick();
+  gameInterval = setInterval(tick,1000);
+}
 
-        function checkCollisions(movingId) {
-            if (!isHost || !gameState || questionActive || gameOver) return;
-            const mover = gameState.players[movingId];
-            if (!mover || !mover.alive) return;
-            const now = Date.now();
-            const players = Object.values(gameState.players);
-            for (const other of players) {
-                if (other.id === movingId || !other.alive) continue;
-                const dx = mover.x - other.x;
-                const dy = mover.y - other.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                const threshold = 0.06; // collision distance
-                if (dist < threshold) {
-                    // check cooldown
-                    const key1 = `${movingId}-${other.id}`;
-                    const key2 = `${other.id}-${movingId}`;
-                    if (gameState.collisionCooldown[key1] && now - gameState.collisionCooldown[key1] < COLLISION_COOLDOWN)
-                        continue;
-                    if (gameState.collisionCooldown[key2] && now - gameState.collisionCooldown[key2] < COLLISION_COOLDOWN)
-                        continue;
-                    // also check if either is blocked
-                    if (mover.blocked || other.blocked) continue;
-                    // trigger duel
-                    triggerDuel(movingId, other.id);
-                    gameState.collisionCooldown[key1] = now;
-                    gameState.collisionCooldown[key2] = now;
-                    return;
-                }
-            }
-        }
+// ══════════════════════════════════════════════
+//  ARENA CANVAS
+// ══════════════════════════════════════════════
+function enterArena(){
+  if($('arena').classList.contains('active')) return; // already in
+  showScreen('arena');
+  canvas = $('arena-canvas');
+  ctx = canvas.getContext('2d');
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  setupJoystick();
+  if(gameState && gameState.players[myId]){
+    // position already assigned
+  }
+  questionActive = false;
+  $('question-overlay').classList.remove('show');
+  gameOver = false;
+  updateHUD();
+  if(animationId) cancelAnimationFrame(animationId);
+  gameLoop();
+}
 
-        // ── Duel (Host only) ──
-        let duelData = null;
+function resizeCanvas(){
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const dpr = window.devicePixelRatio||1;
+  canvas.width = rect.width*dpr;
+  canvas.height = rect.height*dpr;
+  W=canvas.width; H=canvas.height;
+  canvas.style.width=rect.width+'px';
+  canvas.style.height=rect.height+'px';
+}
 
-        function triggerDuel(attackerId, defenderId) {
-            if (!isHost || questionActive || gameOver) return;
-            const attacker = gameState.players[attackerId];
-            const defender = gameState.players[defenderId];
-            if (!attacker || !defender || !attacker.alive || !defender.alive) return;
-            // check if attacker already stole from defender
-            if (myStealCooldown[defenderId] && Date.now() - myStealCooldown[defenderId] < 60000) {
-                return; // can't steal from same person twice in a row quickly
-            }
-            // get a question
-            if (gameState.questions.length === 0) {
-                gameState.questions = shuffleArray([...QUESTION_BANK]);
-                gameState.qIndex = 0;
-            }
-            const q = gameState.questions[gameState.qIndex % gameState.questions.length];
-            gameState.qIndex++;
-            if (gameState.qIndex >= gameState.questions.length) {
-                gameState.questions = shuffleArray([...QUESTION_BANK]);
-                gameState.qIndex = 0;
-            }
-            duelData = {
-                attackerId,
-                defenderId,
-                question: q,
-                answered: {},
-                startTime: Date.now(),
-                timeout: 10000 // 10s to answer
-            };
-            questionActive = true;
-            myAnswered = false;
-            // mark both as blocked
-            attacker.blocked = true;
-            defender.blocked = true;
-            // send question to all players
-            broadcastToRoom({
-                type: 'show_question',
-                duel: {
-                    attackerId,
-                    defenderId,
-                    attackerEmoji: attacker.emoji,
-                    defenderEmoji: defender.emoji,
-                    attackerName: attacker.name,
-                    defenderName: defender.name,
-                    question: q,
-                    timeout: 10000
-                }
-            });
-            // show locally
-            showQuestion(duelData);
-            // auto-close after timeout
-            setTimeout(() => {
-                if (questionActive) {
-                    closeQuestion();
-                }
-            }, 10000);
-        }
+// ── Game Loop ──
+function gameLoop(){
+  if(!canvas){animationId=requestAnimationFrame(gameLoop);return;}
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#0a0e14';
+  ctx.fillRect(0,0,W,H);
+  // grid
+  ctx.strokeStyle='rgba(255,255,255,0.03)';
+  ctx.lineWidth=1;
+  for(let x=0;x<=W;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<=H;y+=60){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
 
-        function showQuestion(duel) {
-            const q = duel.question;
-            const att = gameState.players[duel.attackerId];
-            const def = gameState.players[duel.defenderId];
-            qAttacker.textContent = `${att.emoji} ${att.name}`;
-            qDefender.textContent = `${def.emoji} ${def.name}`;
-            qText.textContent = q.q;
-            qTip.textContent = q.tip || '';
-            qResult.textContent = '';
-            qResult.className = 'q-result';
-            qCloseBtn.style.display = 'none';
-            qChoices.innerHTML = q.choices.map((c, i) => `
-                <button onclick="answerQuestion(${i})" data-i="${i}">${String.fromCharCode(65+i)}. ${c}</button>
-            `).join('');
-            questionOverlay.classList.add('show');
-            // if we are the attacker or defender, we can answer
-            // if we are spectating, we just watch
-        }
+  // move my player
+  if(gameState && gameState.players[myId] && !gameOver && !questionActive){
+    const speed=0.008;
+    const p=gameState.players[myId];
+    p.x=Math.max(.04,Math.min(.96, p.x+joystickDX*speed));
+    p.y=Math.max(.04,Math.min(.96, p.y+joystickDY*speed));
+    if(joystickActive){
+      if(isMaster){
+        checkCollisions(myId);
+        if(Math.random()<.1) broadcast({type:'STATE_SYNC',state:gameState});
+      } else {
+        broadcast({type:'PLAYER_UPDATE',id:myId,x:p.x,y:p.y,name:myName,emoji:myEmoji});
+      }
+    }
+  }
 
-        function answerQuestion(choiceIndex) {
-            if (!questionActive || myAnswered) return;
-            const me = gameState.players[myId];
-            if (!me) return;
-            // only attacker and defender can answer
-            if (myId !== duelData.attackerId && myId !== duelData.defenderId) return;
-            myAnswered = true;
-            // send answer to host
-            if (!isHost) {
-                broadcastToRoom({ type: 'player_answer', id: myId, choiceIndex });
-            } else {
-                handleAnswer(myId, choiceIndex);
-            }
-            // disable buttons
-            qChoices.querySelectorAll('button').forEach(b => b.disabled = true);
-        }
+  // draw players
+  if(gameState){
+    Object.values(gameState.players).forEach(p=>{
+      if(!p.alive || p.id.startsWith('spec_')) return;
+      const x=p.x*W, y=p.y*H;
+      const radius=Math.min(W,H)*.035;
+      const grad=ctx.createRadialGradient(x,y,0,x,y,radius*2.5);
+      grad.addColorStop(0,'rgba(157,78,221,0.15)');
+      grad.addColorStop(1,'rgba(157,78,221,0)');
+      ctx.fillStyle=grad;
+      ctx.beginPath();ctx.arc(x,y,radius*2.5,0,Math.PI*2);ctx.fill();
+      ctx.shadowColor='rgba(157,78,221,0.3)';ctx.shadowBlur=20;
+      ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);
+      ctx.fillStyle=p.id===myId?'rgba(245,200,66,0.2)':'rgba(255,255,255,0.06)';
+      ctx.fill();
+      ctx.strokeStyle=p.id===myId?'#f5c842':'rgba(255,255,255,0.15)';
+      ctx.lineWidth=2;ctx.stroke();ctx.shadowBlur=0;
+      ctx.font=`${radius*1.4}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(p.emoji,x,y-2);
+      ctx.font=`${Math.max(10,radius*.6)}px sans-serif`;ctx.fillStyle='#8b949e';
+      ctx.fillText(p.name,x,y+radius+18);
+      ctx.font=`${Math.max(10,radius*.5)}px sans-serif`;ctx.fillStyle='#f5c842';
+      ctx.fillText(`${p.pts} pts`,x,y+radius+36);
+    });
+  }
+  if(!joystickActive&&!questionActive&&!gameOver){
+    ctx.font='13px sans-serif';ctx.fillStyle='rgba(255,255,255,0.12)';ctx.textAlign='center';
+    ctx.fillText('👆 Joystick pour bouger · Percute un adversaire pour un duel !',W/2,H-40);
+  }
+  animationId=requestAnimationFrame(gameLoop);
+}
 
-        function handleAnswer(playerId, choiceIndex) {
-            if (!isHost || !duelData) return;
-            const q = duelData.question;
-            const correct = choiceIndex === q.correct;
-            const isAttacker = playerId === duelData.attackerId;
-            const isDefender = playerId === duelData.defenderId;
-            if (!isAttacker && !isDefender) return;
-            if (duelData.answered[playerId]) return;
-            duelData.answered[playerId] = { choiceIndex, correct, timestamp: Date.now() };
+// ── HUD ──
+function updateHUD(){
+  if(!gameState) return;
+  const me=gameState.players[myId];
+  if(me) $('hud-mypts').textContent=me.pts||0;
+  const players=Object.values(gameState.players).filter(p=>p.alive&&!p.id.startsWith('spec_'));
+  $('hud-players').innerHTML=players.map(p=>`
+    <div class="hud-player">
+      <span>${p.emoji}</span>
+      <span class="name">${p.name}</span>
+      <span class="pts">${p.pts}</span>
+      ${p.id===myId?'⭐':''}
+    </div>`).join('');
+}
 
-            // check if both answered or timeout
-            const bothAnswered = Object.keys(duelData.answered).length >= 2;
-            const timeUp = Date.now() - duelData.startTime > 10000;
+// ══════════════════════════════════════════════
+//  JOYSTICK
+// ══════════════════════════════════════════════
+function setupJoystick(){
+  const base=$('joystick-base'), knob=$('joystick-knob');
+  let dragging=false;
+  function getPos(e){const rect=base.getBoundingClientRect();const t=e.touches?e.touches[0]:e;return{x:(t.clientX-rect.left)/rect.width,y:(t.clientY-rect.top)/rect.height};}
+  function moveKnob(pos){
+    let dx=pos.x-.5,dy=pos.y-.5;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist>.5){dx=dx/dist*.5;dy=dy/dist*.5;}
+    knob.style.transform=`translate(calc(-50% + ${dx*base.offsetWidth}px),calc(-50% + ${dy*base.offsetHeight}px))`;
+    joystickDX=dx*2; joystickDY=dy*2;
+    joystickActive=dist>.05;
+    dist>.05?knob.classList.add('active'):knob.classList.remove('active');
+    if(!joystickActive){joystickDX=0;joystickDY=0;}
+  }
+  function onStart(e){e.preventDefault();dragging=true;moveKnob(getPos(e));}
+  function onMove(e){e.preventDefault();if(dragging)moveKnob(getPos(e));}
+  function onEnd(e){e.preventDefault();dragging=false;knob.style.transform='translate(-50%,-50%)';joystickDX=0;joystickDY=0;joystickActive=false;knob.classList.remove('active');}
+  base.addEventListener('mousedown',onStart);
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onEnd);
+  base.addEventListener('touchstart',onStart,{passive:false});
+  document.addEventListener('touchmove',onMove,{passive:false});
+  document.addEventListener('touchend',onEnd,{passive:false});
+  document.addEventListener('touchcancel',onEnd,{passive:false});
+}
 
-            if (bothAnswered || timeUp) {
-                resolveDuel();
-            }
-        }
+// ══════════════════════════════════════════════
+//  COLLISION (master only)
+// ══════════════════════════════════════════════
+const COLL_COOLDOWN=3000;
+function checkCollisions(movingId){
+  if(!isMaster||!gameState||questionActive||gameOver) return;
+  const mover=gameState.players[movingId];
+  if(!mover||!mover.alive||mover.blocked) return;
+  const now=Date.now();
+  for(const other of Object.values(gameState.players)){
+    if(other.id===movingId||!other.alive||other.blocked||other.id.startsWith('spec_')) continue;
+    const dx=mover.x-other.x, dy=mover.y-other.y;
+    if(Math.sqrt(dx*dx+dy*dy)<.06){
+      const k1=`${movingId}-${other.id}`, k2=`${other.id}-${movingId}`;
+      if((gameState.collisionCooldown[k1]&&now-gameState.collisionCooldown[k1]<COLL_COOLDOWN)||
+         (gameState.collisionCooldown[k2]&&now-gameState.collisionCooldown[k2]<COLL_COOLDOWN)) continue;
+      triggerDuel(movingId,other.id);
+      gameState.collisionCooldown[k1]=now;
+      gameState.collisionCooldown[k2]=now;
+      return;
+    }
+  }
+}
 
-        function resolveDuel() {
-            if (!isHost || !duelData) return;
-            const q = duelData.question;
-            const att = gameState.players[duelData.attackerId];
-            const def = gameState.players[duelData.defenderId];
-            const attAns = duelData.answered[duelData.attackerId];
-            const defAns = duelData.answered[duelData.defenderId];
-            let result = 'draw';
-            let winner = null;
-            let loser = null;
-            let points = 0;
+// ══════════════════════════════════════════════
+//  DUEL (master only)
+// ══════════════════════════════════════════════
+function triggerDuel(attackerId,defenderId){
+  if(!isMaster||questionActive||gameOver) return;
+  const att=gameState.players[attackerId], def=gameState.players[defenderId];
+  if(!att||!def) return;
+  if(gameState.questions.length===0){gameState.questions=shuffleArray([...QUESTION_BANK]);gameState.qIndex=0;}
+  const q=gameState.questions[gameState.qIndex%gameState.questions.length];
+  gameState.qIndex=(gameState.qIndex+1)%gameState.questions.length;
+  duelData={attackerId,defenderId,question:q,answered:{},startTime:Date.now()};
+  questionActive=true;
+  myAnswered=false;
+  att.blocked=true; def.blocked=true;
+  const payload={type:'SHOW_QUESTION',duel:{attackerId,defenderId,
+    attackerEmoji:att.emoji,defenderEmoji:def.emoji,
+    attackerName:att.name,defenderName:def.name,question:q}};
+  broadcast(payload);
+  showQuestionUI(payload.duel);
+  setTimeout(()=>{ if(questionActive&&duelData) resolveDuel(); },10000);
+}
 
-            if (attAns && attAns.correct && defAns && defAns.correct) {
-                // both correct → fastest wins
-                if (attAns.timestamp < defAns.timestamp) {
-                    result = 'attacker';
-                    winner = att;
-                    loser = def;
-                } else if (defAns.timestamp < attAns.timestamp) {
-                    result = 'defender';
-                    winner = def;
-                    loser = att;
-                } else {
-                    result = 'draw';
-                }
-            } else if (attAns && attAns.correct) {
-                result = 'attacker';
-                winner = att;
-                loser = def;
-            } else if (defAns && defAns.correct) {
-                result = 'defender';
-                winner = def;
-                loser = att;
-            } else {
-                result = 'draw';
-            }
+function showQuestionUI(duel){
+  const q=duel.question;
+  $('q-attacker').textContent=`${duel.attackerEmoji} ${duel.attackerName}`;
+  $('q-defender').textContent=`${duel.defenderEmoji} ${duel.defenderName}`;
+  $('q-text').textContent=q.q;
+  $('q-tip').textContent=q.tip||'';
+  $('q-result').textContent=''; $('q-result').className='q-result';
+  $('q-close-btn').style.display='none';
+  $('q-choices').innerHTML=q.choices.map((c,i)=>`
+    <button onclick="answerQuestion(${i})" data-i="${i}">${String.fromCharCode(65+i)}. ${c}</button>`).join('');
+  $('question-overlay').classList.add('show');
+}
 
-            if (result === 'attacker' || result === 'defender') {
-                const stealAmount = Math.min(20, loser.pts);
-                winner.pts += stealAmount;
-                loser.pts -= stealAmount;
-                // track steal
-                if (winner.id === myId) {
-                    myStealCooldown[loser.id] = Date.now();
-                }
-                // streak
-                winner.streak = (winner.streak || 0) + 1;
-                loser.streak = 0;
-                points = stealAmount;
-            }
+function answerQuestion(choiceIndex){
+  if(!questionActive||myAnswered) return;
+  if(!duelData) return;
+  // only attacker and defender can answer
+  if(myId!==duelData.attackerId&&myId!==duelData.defenderId) return;
+  myAnswered=true;
+  $('q-choices').querySelectorAll('button').forEach(b=>b.disabled=true);
+  if(isMaster){ handleAnswer(myId,choiceIndex); }
+  else { broadcast({type:'PLAYER_ANSWER',id:myId,choiceIndex}); }
+}
 
-            // unblock
-            att.blocked = false;
-            def.blocked = false;
+function handleAnswer(playerId,choiceIndex){
+  if(!isMaster||!duelData) return;
+  if(playerId!==duelData.attackerId&&playerId!==duelData.defenderId) return;
+  if(duelData.answered[playerId]) return;
+  duelData.answered[playerId]={choiceIndex,correct:choiceIndex===duelData.question.correct,timestamp:Date.now()};
+  if(Object.keys(duelData.answered).length>=2) resolveDuel();
+}
 
-            // broadcast result
-            broadcastToRoom({
-                type: 'duel_result',
-                result,
-                winnerId: winner ? winner.id : null,
-                loserId: loser ? loser.id : null,
-                points,
-                attackerId: duelData.attackerId,
-                defenderId: duelData.defenderId,
-                correctAnswer: q.correct,
-                choices: q.choices
-            });
+function resolveDuel(){
+  if(!isMaster||!duelData) return;
+  const q=duelData.question;
+  const att=gameState.players[duelData.attackerId];
+  const def=gameState.players[duelData.defenderId];
+  const attAns=duelData.answered[duelData.attackerId];
+  const defAns=duelData.answered[duelData.defenderId];
+  let result='draw', winner=null, loser=null, points=0;
+  if(attAns?.correct&&defAns?.correct){
+    if(attAns.timestamp<defAns.timestamp){winner=att;loser=def;result='attacker';}
+    else if(defAns.timestamp<attAns.timestamp){winner=def;loser=att;result='defender';}
+  } else if(attAns?.correct){winner=att;loser=def;result='attacker';}
+  else if(defAns?.correct){winner=def;loser=att;result='defender';}
+  if(winner&&loser){
+    const steal=Math.min(20,loser.pts);
+    winner.pts+=steal; loser.pts-=steal;
+    winner.streak=(winner.streak||0)+1; loser.streak=0;
+    points=steal;
+  }
+  if(att) att.blocked=false;
+  if(def) def.blocked=false;
+  const resultMsg={type:'DUEL_RESULT',result,
+    winnerId:winner?.id,loserId:loser?.id,points,
+    attackerId:duelData.attackerId,defenderId:duelData.defenderId,
+    correctAnswer:q.correct,choices:q.choices,
+    winnerEmoji:winner?.emoji,winnerName:winner?.name};
+  broadcast(resultMsg);
+  showDuelResult(resultMsg);
+  duelData=null; questionActive=false;
+  setTimeout(()=>{
+    $('question-overlay').classList.remove('show');
+    broadcast({type:'QUESTION_CLOSED'});
+    broadcast({type:'STATE_SYNC',state:gameState});
+    updateHUD();
+  },2500);
+}
 
-            // show result locally
-            showDuelResult({
-                result,
-                winner,
-                loser,
-                points,
-                attackerId: duelData.attackerId,
-                defenderId: duelData.defenderId,
-                correctAnswer: q.correct,
-                choices: q.choices
-            });
+function showDuelResult(data){
+  $('q-choices').querySelectorAll('button').forEach((btn,i)=>{
+    btn.disabled=true;
+    if(i===data.correctAnswer) btn.classList.add('correct');
+  });
+  const r=$('q-result');
+  if(data.result==='draw'){r.textContent='⚖️ Égalité — personne ne vole de points !';r.className='q-result draw';}
+  else{r.textContent=`⚔️ ${data.winnerEmoji} ${data.winnerName} vole ${data.points} pts !`;r.className='q-result win';}
+  $('q-close-btn').style.display='block';
+  updateHUD();
+}
 
-            duelData = null;
-            questionActive = false;
-            // close question overlay after a delay
-            setTimeout(() => {
-                questionOverlay.classList.remove('show');
-                broadcastToRoom({ type: 'question_closed' });
-                // sync state
-                broadcastToRoom({ type: 'state_sync', state: gameState });
-                updateHUD();
-            }, 2500);
-        }
+function closeQuestion(){
+  $('question-overlay').classList.remove('show');
+  questionActive=false;
+  if(isMaster){
+    if(duelData){
+      const att=gameState.players[duelData.attackerId];
+      const def=gameState.players[duelData.defenderId];
+      if(att) att.blocked=false;
+      if(def) def.blocked=false;
+      duelData=null;
+    }
+    broadcast({type:'QUESTION_CLOSED'});
+    broadcast({type:'STATE_SYNC',state:gameState});
+  }
+}
 
-        function showDuelResult(data) {
-            const qChoices = document.querySelectorAll('#q-choices button');
-            qChoices.forEach((btn, i) => {
-                btn.disabled = true;
-                if (i === data.correctAnswer) btn.classList.add('correct');
-                else if (btn.dataset.i == data.correctAnswer) btn.classList.add('correct');
-            });
-            const resultEl = qResult;
-            if (data.result === 'draw') {
-                resultEl.textContent = '⚖️ Personne ne répond correctement !';
-                resultEl.className = 'q-result draw';
-            } else if (data.result === 'attacker') {
-                const att = gameState.players[data.attackerId];
-                resultEl.textContent = `⚔️ ${att.emoji} ${att.name} vole ${data.points} pts !`;
-                resultEl.className = 'q-result win';
-            } else if (data.result === 'defender') {
-                const def = gameState.players[data.defenderId];
-                resultEl.textContent = `⚔️ ${def.emoji} ${def.name} contre-attaque et vole ${data.points} pts !`;
-                resultEl.className = 'q-result win';
-            }
-            qCloseBtn.style.display = 'block';
-            qCloseBtn.textContent = 'Continuer';
-            // update HUD
-            updateHUD();
-        }
+// ══════════════════════════════════════════════
+//  SPECTATOR VIEW
+// ══════════════════════════════════════════════
+function syncSpectator(){
+  if(!gameState) return;
+  const players=Object.values(gameState.players).filter(p=>!p.id.startsWith('spec_'));
+  $('spec-players').innerHTML=players.sort((a,b)=>b.pts-a.pts).map(p=>`
+    <div class="hud-player">
+      <span>${p.emoji}</span><span class="name">${p.name}</span><span class="pts">${p.pts}</span>
+    </div>`).join('');
+  const sorted=players.sort((a,b)=>b.pts-a.pts);
+  $('spec-content').innerHTML=`
+    <div style="width:100%;max-width:500px">
+      <h3 style="color:#f5c842;margin-bottom:1rem;text-align:center">🏆 Classement en direct</h3>
+      ${sorted.map((p,i)=>`
+        <div style="display:flex;align-items:center;gap:1rem;padding:.75rem 1rem;margin:.4rem 0;background:rgba(255,255,255,0.04);border-radius:12px;border:1px solid ${i===0?'#f5c842':i===1?'#58a6ff':i===2?'#9d4edd':'rgba(255,255,255,0.06)'}">
+          <span style="font-size:1.3rem">${i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}.`}</span>
+          <span style="font-size:1.5rem">${p.emoji}</span>
+          <span style="flex:1;font-weight:600">${p.name}</span>
+          <span style="font-weight:800;color:#f5c842">${p.pts} pts</span>
+        </div>`).join('')}
+    </div>`;
+}
 
-        function closeQuestion() {
-            questionOverlay.classList.remove('show');
-            questionActive = false;
-            if (isHost) {
-                broadcastToRoom({ type: 'question_closed' });
-                // unblock players if still blocked
-                if (duelData) {
-                    const att = gameState.players[duelData.attackerId];
-                    const def = gameState.players[duelData.defenderId];
-                    if (att) att.blocked = false;
-                    if (def) def.blocked = false;
-                    duelData = null;
-                }
-                broadcastToRoom({ type: 'state_sync', state: gameState });
-            }
-        }
+// ══════════════════════════════════════════════
+//  END GAME
+// ══════════════════════════════════════════════
+function endGame(){
+  gameOver=true;
+  if(gameInterval) clearInterval(gameInterval);
+  if(animationId) cancelAnimationFrame(animationId);
+  const results=Object.values(gameState.players)
+    .filter(p=>!p.id.startsWith('spec_'))
+    .sort((a,b)=>b.pts-a.pts);
+  broadcast({type:'GAME_END',results});
+  renderEndScreen(results);
+}
 
-        // ── End Game ──
-        function endGame() {
-            gameOver = true;
-            if (isHost) {
-                clearInterval(gameInterval);
-                const results = Object.values(gameState.players).sort((a, b) => b.pts - a.pts);
-                broadcastToRoom({ type: 'game_end', results });
-                showEndScreen(results);
-            }
-        }
+function renderEndScreen(results){
+  const sorted=results||[];
+  const winner=sorted[0];
+  $('end-emoji').textContent=winner?.emoji||'🏆';
+  $('end-title').textContent=winner?`${winner.name} remporte la bataille !`:'Fin de la bataille !';
+  $('end-podium').innerHTML=sorted.map((p,i)=>`
+    <div class="item rank${i<3?i+1:''}">
+      <span class="pos">${i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}.`}</span>
+      <span class="ename">${p.emoji} ${p.name}</span>
+      <span class="epts">${p.pts} pts</span>
+    </div>`).join('');
+  showScreen('end-screen');
+}
 
-        function showEndScreen(results) {
-            showScreen('end-screen');
-            const sorted = results || Object.values(gameState.players).sort((a, b) => b.pts - a.pts);
-            const winner = sorted[0];
-            endEmoji.textContent = winner ? winner.emoji || '🏆' : '🏆';
-            endTitle.textContent = winner ? `${winner.name} remporte la bataille !` : 'Fin de la bataille !';
-            endPodium.innerHTML = sorted.map((p, i) => `
-                <div class="item rank${i+1 <= 3 ? i+1 : ''}">
-                    <span class="pos">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`}</span>
-                    <span class="ename">${p.emoji || '😀'} ${p.name}</span>
-                    <span class="epts">${p.pts} pts</span>
-                </div>
-            `).join('');
-            if (isHost) {
-                broadcastToRoom({ type: 'game_end', results: sorted });
-            }
-        }
+function resetGame(){
+  if(gameInterval) clearInterval(gameInterval);
+  if(animationId) cancelAnimationFrame(animationId);
+  gameState=null; isMaster=false; isSpectator=false;
+  questionActive=false; duelData=null; gameOver=false;
+  try{ localStorage.removeItem(CHANNEL); }catch(e){}
+  showScreen('landing');
+}
 
-        // ── Reset ──
-        function resetGame() {
-            if (peer) { peer.destroy();
-                peer = null; }
-            connections = {};
-            isHost = false;
-            roomId = '';
-            myId = '';
-            gameState = null;
-            gameOver = false;
-            questionActive = false;
-            if (gameInterval) clearInterval(gameInterval);
-            if (animationId) cancelAnimationFrame(animationId);
-            myStealCooldown = {};
-            duelData = null;
-            showScreen('landing');
-            window.location.reload(); // simple reset
-        }
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+initChannel();
+showScreen('landing');
+$('player-name-input').value='Joueur'+Math.floor(Math.random()*99);
 
-        function leaveRoom() {
-            if (peer) { peer.destroy();
-                peer = null; }
-            connections = {};
-            isHost = false;
-            roomId = '';
-            myId = '';
-            gameState = null;
-            if (gameInterval) clearInterval(gameInterval);
-            if (animationId) cancelAnimationFrame(animationId);
-            showScreen('landing');
-        }
-
-        // ── Init ──
-        showScreen('landing');
-        playerNameInput.value = 'Joueur' + Math.floor(Math.random() * 100);
-
-        // ── Keyboard shortcuts ──
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && questionActive && !myAnswered) {
-                // auto-select first available choice
-                const btns = qChoices.querySelectorAll('button:not(:disabled)');
-                if (btns.length > 0) btns[0].click();
-            }
-        });
-
-        console.log('⚡ Grammaire Arena chargée !');
-        console.log('📱 Utilise le joystick pour te déplacer, percute les autres joueurs pour déclencher un duel.');
-        console.log('🏆 Le premier qui répond correctement vole des points !');
-    </script>
+console.log('⚡ Grammaire Arena — BroadcastChannel + localStorage polling');
+console.log('📱 Même URL, même Wi-Fi, même navigateur (Safari ou Chrome)');
+</script>
 </body>
 </html>
