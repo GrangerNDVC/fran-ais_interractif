@@ -2,50 +2,34 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Grammaire Battle</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>⚡ Grammaire Battle Arena</title>
     <style>
-        /* ── Reset & variables ── */
-        :root {
-            --ink: #0D1117;
-            --ink2: #161B22;
-            --border: rgba(255,255,255,0.1);
-            --gold: #F5C842;
-            --gold2: #C49A2E;
-            --violet: #7B2FBE;
-            --violet2: #9D4EDD;
-            --green: #3FB950;
-            --red: #F85149;
-            --blue: #58A6FF;
-            --text: #E6EDF3;
-            --text2: #8B949E;
-            --card: rgba(255,255,255,0.05);
-        }
-        *, *::before, *::after {
+        * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
-        html, body {
+        html,
+        body {
             height: 100%;
             font-family: 'Segoe UI', system-ui, sans-serif;
-            background: var(--ink);
-            color: var(--text);
-            overflow-x: hidden;
+            background: #0a0e14;
+            color: #e6edf3;
+            overflow: hidden;
+            touch-action: none;
         }
-        button {
-            cursor: pointer;
-            border: none;
-            font-family: inherit;
-        }
-
-        /* ── Screens ── */
         .screen {
             display: none;
             flex-direction: column;
-            min-height: 100vh;
-            padding: 1.5rem;
+            height: 100vh;
+            width: 100vw;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: #0a0e14;
         }
         .screen.active {
             display: flex;
@@ -55,19 +39,20 @@
         #landing {
             align-items: center;
             justify-content: center;
-            gap: 2rem;
+            gap: 1.5rem;
             text-align: center;
+            padding: 2rem;
         }
         #landing h1 {
-            font-size: clamp(2rem, 6vw, 3.5rem);
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--gold), var(--violet2));
+            font-size: clamp(2.2rem, 7vw, 4rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, #f5c842, #9d4edd);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
         #landing p {
-            color: var(--text2);
+            color: #8b949e;
             font-size: 1.1rem;
         }
         .btn-group {
@@ -79,671 +64,502 @@
         }
         .btn-main {
             padding: 1rem 2rem;
-            border-radius: 12px;
+            border-radius: 14px;
             font-size: 1.1rem;
             font-weight: 700;
             transition: .15s;
-        }
-        .btn-master {
-            background: var(--gold);
-            color: #000;
-        }
-        .btn-master:hover {
-            background: var(--gold2);
-        }
-        .btn-player {
-            background: var(--violet);
-            color: #fff;
-        }
-        .btn-player:hover {
-            background: var(--violet2);
-        }
-        .btn-tableau {
-            background: var(--card);
-            color: var(--text);
-            border: 1px solid var(--border);
-        }
-        .btn-tableau:hover {
-            background: rgba(255,255,255,0.1);
-        }
-
-        /* ── Master Setup ── */
-        #master-setup {
-            gap: 1.5rem;
-        }
-        #master-setup h2 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--gold);
-        }
-        .setup-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-        .setup-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1rem;
-        }
-        .setup-card h3 {
-            font-size: .85rem;
-            color: var(--text2);
-            text-transform: uppercase;
-            letter-spacing: .08em;
-            margin-bottom: .75rem;
-        }
-        .tag-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: .5rem;
-        }
-        .tag {
-            padding: .35rem .8rem;
-            border-radius: 20px;
-            font-size: .85rem;
-            border: 1px solid var(--border);
-            background: transparent;
-            color: var(--text2);
-            transition: .15s;
+            border: none;
             cursor: pointer;
         }
-        .tag.on {
-            border-color: var(--gold);
-            color: var(--gold);
-            background: rgba(245,200,66,.12);
-        }
-        select, input[type="text"] {
-            background: var(--card);
-            border: 1px solid var(--border);
-            color: var(--text);
-            border-radius: 8px;
-            padding: .6rem .9rem;
-            font-size: .95rem;
-            width: 100%;
-        }
-        .players-list {
-            display: flex;
-            flex-direction: column;
-            gap: .5rem;
-            max-height: 180px;
-            overflow-y: auto;
-        }
-        .player-chip {
-            display: flex;
-            align-items: center;
-            gap: .6rem;
-            padding: .5rem .8rem;
-            background: rgba(255,255,255,.04);
-            border-radius: 8px;
-            font-size: .9rem;
-        }
-        .player-chip .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--green);
-            flex-shrink: 0;
-        }
-        .player-chip .kick {
-            margin-left: auto;
-            background: none;
-            color: var(--text2);
-            font-size: 1rem;
-            padding: .1rem .4rem;
-            border-radius: 4px;
-        }
-        .player-chip .kick:hover {
-            color: var(--red);
-        }
-        .btn-start {
-            width: 100%;
-            padding: 1rem;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            background: var(--green);
+        .btn-host {
+            background: #f5c842;
             color: #000;
-            margin-top: auto;
-            transition: .15s;
         }
-        .btn-start:disabled {
-            opacity: .4;
-            cursor: not-allowed;
-        }
-        .btn-start:not(:disabled):hover {
-            filter: brightness(1.1);
-        }
-
-        /* ── Master Game ── */
-        #master-game {
-            gap: 1rem;
-        }
-        .master-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: .5rem;
-        }
-        .master-top h2 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--text2);
-        }
-        .q-counter {
-            font-size: .9rem;
-            color: var(--text2);
-        }
-        .q-box {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 1.5rem;
-        }
-        .q-theme-badge {
-            display: inline-block;
-            padding: .3rem .8rem;
-            border-radius: 20px;
-            font-size: .78rem;
-            font-weight: 600;
-            background: rgba(155,78,221,.2);
-            color: var(--violet2);
-            margin-bottom: .75rem;
-        }
-        .q-text {
-            font-size: clamp(1rem, 2.5vw, 1.3rem);
-            line-height: 1.5;
-            font-weight: 500;
-        }
-        .q-tip {
-            margin-top: .75rem;
-            font-size: .85rem;
-            color: var(--text2);
-            font-style: italic;
-        }
-        .answers-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: .75rem;
-        }
-        .ans-btn {
-            padding: .9rem 1rem;
-            border-radius: 10px;
-            font-size: .95rem;
-            font-weight: 500;
-            border: 1.5px solid var(--border);
-            background: var(--card);
-            color: var(--text);
-            text-align: left;
-            transition: .15s;
-            line-height: 1.3;
-        }
-        .ans-btn:hover:not(:disabled) {
-            border-color: var(--gold);
-            color: var(--gold);
-        }
-        .ans-btn.correct {
-            border-color: var(--green);
-            background: rgba(63,185,80,.15);
-            color: var(--green);
-        }
-        .ans-btn.wrong {
-            border-color: var(--red);
-            background: rgba(248,81,73,.12);
-            color: var(--red);
-        }
-        .ans-btn:disabled {
-            cursor: default;
-        }
-        .reveal-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-        .reveal-info {
-            font-size: .9rem;
-            color: var(--text2);
-        }
-        .reveal-info strong {
-            color: var(--text);
-        }
-        .btn-next {
-            padding: .7rem 1.5rem;
-            border-radius: 10px;
-            font-size: .95rem;
-            font-weight: 600;
-            background: var(--gold);
-            color: #000;
-            display: none;
-        }
-        .btn-next:hover {
-            background: var(--gold2);
-        }
-        .live-scores {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1rem;
-        }
-        .live-scores h3 {
-            font-size: .82rem;
-            color: var(--text2);
-            text-transform: uppercase;
-            letter-spacing: .08em;
-            margin-bottom: .75rem;
-        }
-        .score-row {
-            display: flex;
-            align-items: center;
-            gap: .75rem;
-            padding: .35rem 0;
-            border-bottom: 1px solid var(--border);
-            font-size: .9rem;
-        }
-        .score-row:last-child {
-            border-bottom: none;
-        }
-        .score-rank {
-            width: 20px;
-            text-align: center;
-            font-weight: 700;
-            color: var(--text2);
-            font-size: .8rem;
-        }
-        .score-name {
-            flex: 1;
-            font-weight: 500;
-        }
-        .score-pts {
-            font-weight: 700;
-            color: var(--gold);
-        }
-        .score-streak {
-            font-size: .75rem;
-            color: var(--violet2);
-        }
-        .timer-ring {
-            position: relative;
-            width: 52px;
-            height: 52px;
-            flex-shrink: 0;
-        }
-        .timer-ring svg {
-            transform: rotate(-90deg);
-        }
-        .timer-ring .bg {
-            stroke: var(--border);
-            fill: none;
-            stroke-width: 4;
-        }
-        .timer-ring .fg {
-            fill: none;
-            stroke-width: 4;
-            stroke-linecap: round;
-            transition: stroke-dashoffset .9s linear, stroke .5s;
-        }
-        .timer-num {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            font-weight: 700;
-        }
-
-        /* ── Player Join ── */
-        #player-join {
-            align-items: center;
-            justify-content: center;
-            gap: 1.5rem;
-            text-align: center;
-        }
-        #player-join h2 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--violet2);
-        }
-        #player-join p {
-            color: var(--text2);
-        }
-        #player-name-input {
-            width: 100%;
-            max-width: 300px;
-            font-size: 1.1rem;
-            text-align: center;
-            padding: .8rem 1rem;
+        .btn-host:hover {
+            background: #d4a832;
         }
         .btn-join {
-            width: 100%;
-            max-width: 300px;
-            padding: .9rem;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            background: var(--violet);
+            background: #7b2fbe;
             color: #fff;
         }
         .btn-join:hover {
-            background: var(--violet2);
+            background: #9d4edd;
         }
-        #join-status {
-            font-size: .9rem;
-            padding: .5rem 1rem;
-            border-radius: 8px;
+        .btn-spectate {
+            background: rgba(255, 255, 255, 0.06);
+            color: #e6edf3;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        #join-status.waiting {
-            color: var(--text2);
-        }
-        #join-status.ok {
-            color: var(--green);
-        }
-        #join-status.err {
-            color: var(--red);
+        .btn-spectate:hover {
+            background: rgba(255, 255, 255, 0.12);
         }
 
-        /* ── Player Game ── */
-        #player-game {
+        /* ── Room ── */
+        #room-screen {
+            padding: 1.5rem;
             gap: 1rem;
         }
-        .player-header {
+        #room-screen .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: .5rem;
+        }
+        #room-screen .header h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #f5c842;
+        }
+        .room-code {
+            background: rgba(255, 255, 255, 0.06);
+            padding: .5rem 1.2rem;
+            border-radius: 30px;
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: 4px;
+            color: #f5c842;
+            border: 1px solid rgba(245, 200, 66, 0.3);
+        }
+        .players-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .8rem;
+            padding: .5rem 0;
+            min-height: 60px;
+        }
+        .player-tag {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            background: rgba(255, 255, 255, 0.06);
+            padding: .4rem 1rem .4rem .6rem;
+            border-radius: 30px;
+            font-size: .95rem;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .player-tag .emoji {
+            font-size: 1.5rem;
+        }
+        .player-tag .name {
+            font-weight: 500;
+        }
+        .player-tag .ready {
+            color: #3fb950;
+            font-size: .75rem;
+        }
+        .emoji-picker {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .6rem;
+            padding: .5rem 0;
+        }
+        .emoji-picker button {
+            font-size: 2rem;
+            width: 3.2rem;
+            height: 3.2rem;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            background: rgba(255, 255, 255, 0.04);
+            cursor: pointer;
+            transition: .15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .emoji-picker button.selected {
+            border-color: #f5c842;
+            background: rgba(245, 200, 66, 0.15);
+            transform: scale(1.1);
+        }
+        .emoji-picker button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .room-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: auto;
+            padding-top: 1rem;
+        }
+        .room-actions button {
+            flex: 1;
+            padding: .9rem;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: .15s;
+        }
+        .btn-launch {
+            background: #3fb950;
+            color: #000;
+        }
+        .btn-launch:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+        }
+        .btn-launch:not(:disabled):hover {
+            filter: brightness(1.1);
+        }
+        .btn-leave {
+            background: rgba(255, 255, 255, 0.06);
+            color: #e6edf3;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .btn-leave:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        /* ── Arena ── */
+        #arena {
+            background: #0a0e14;
+            position: relative;
+            overflow: hidden;
+        }
+        #arena canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+            cursor: none;
+        }
+        .hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: .8rem 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: none;
+            z-index: 10;
+            background: linear-gradient(to bottom, rgba(10, 14, 20, 0.8) 0%, transparent 100%);
+        }
+        .hud-left {
+            display: flex;
+            flex-direction: column;
+            gap: .2rem;
+        }
+        .hud-timer {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #f5c842;
+            font-variant-numeric: tabular-nums;
+            text-shadow: 0 2px 12px rgba(245, 200, 66, 0.3);
+        }
+        .hud-score {
+            font-size: .9rem;
+            color: #8b949e;
+        }
+        .hud-score strong {
+            color: #f5c842;
+        }
+        .hud-players {
+            display: flex;
+            gap: .8rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            pointer-events: auto;
+        }
+        .hud-player {
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+            background: rgba(0, 0, 0, 0.6);
+            padding: .2rem .8rem .2rem .4rem;
+            border-radius: 30px;
+            font-size: .8rem;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(4px);
+        }
+        .hud-player .emoji {
+            font-size: 1.2rem;
+        }
+        .hud-player .pts {
+            font-weight: 700;
+            color: #f5c842;
+        }
+        .hud-player .name {
+            max-width: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* ── Question Overlay ── */
+        #question-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 50;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+            padding: 1.5rem;
+        }
+        #question-overlay.show {
+            display: flex;
+        }
+        .question-card {
+            background: #161b22;
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 560px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .question-card .duel-info {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            font-size: .85rem;
+            color: #8b949e;
+            margin-bottom: .8rem;
         }
-        .player-name-badge {
-            font-size: .9rem;
-            color: var(--text2);
-        }
-        .player-name-badge strong {
-            color: var(--text);
-        }
-        .player-pts {
-            font-size: 1rem;
+        .question-card .duel-info .vs {
             font-weight: 700;
-            color: var(--gold);
+            color: #f5c842;
         }
-        .player-q-box {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 1.25rem;
-        }
-        .player-q-text {
-            font-size: clamp(1rem, 2.8vw, 1.2rem);
+        .question-card .q-text {
+            font-size: 1.15rem;
+            font-weight: 600;
             line-height: 1.5;
-            font-weight: 500;
-            margin-bottom: 1rem;
+            margin-bottom: 1.2rem;
+            min-height: 3rem;
         }
-        .player-ans-grid {
+        .question-card .q-choices {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: .75rem;
+            gap: .7rem;
         }
-        .p-ans-btn {
-            padding: 1rem;
-            border-radius: 10px;
+        .question-card .q-choices button {
+            padding: .9rem 1rem;
+            border-radius: 12px;
             font-size: 1rem;
             font-weight: 500;
-            border: 1.5px solid var(--border);
-            background: var(--card);
-            color: var(--text);
-            text-align: center;
+            border: 1.5px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.04);
+            color: #e6edf3;
+            cursor: pointer;
             transition: .15s;
-            line-height: 1.3;
+            text-align: left;
         }
-        .p-ans-btn:hover:not(:disabled) {
-            border-color: var(--violet2);
-            color: var(--violet2);
+        .question-card .q-choices button:hover:not(:disabled) {
+            border-color: #9d4edd;
+            background: rgba(157, 78, 221, 0.1);
         }
-        .p-ans-btn.selected {
-            border-color: var(--gold);
-            background: rgba(245,200,66,.15);
-            color: var(--gold);
-        }
-        .p-ans-btn.correct {
-            border-color: var(--green);
-            background: rgba(63,185,80,.15);
-            color: var(--green);
-        }
-        .p-ans-btn.wrong {
-            border-color: var(--red);
-            background: rgba(248,81,73,.12);
-            color: var(--red);
-        }
-        .p-ans-btn:disabled {
+        .question-card .q-choices button:disabled {
+            opacity: .5;
             cursor: default;
         }
-        .player-waiting {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text2);
+        .question-card .q-choices button.correct {
+            border-color: #3fb950;
+            background: rgba(63, 185, 80, 0.15);
+            color: #3fb950;
         }
-        .player-waiting .big {
-            font-size: 2.5rem;
+        .question-card .q-choices button.wrong {
+            border-color: #f85149;
+            background: rgba(248, 81, 73, 0.1);
+            color: #f85149;
         }
-        .feedback-msg {
-            text-align: center;
-            padding: 1rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 10px;
-            margin-top: .5rem;
-        }
-        .feedback-msg.correct {
-            background: rgba(63,185,80,.15);
-            color: var(--green);
-        }
-        .feedback-msg.wrong {
-            background: rgba(248,81,73,.12);
-            color: var(--red);
-        }
-        .streak-badge {
-            text-align: center;
-            font-size: .85rem;
-            color: var(--violet2);
-            margin-top: .3rem;
-        }
-
-        /* ── Tableau ── */
-        #tableau {
-            gap: 1rem;
-            background: var(--ink);
-        }
-        #tableau h1 {
-            font-size: clamp(1.5rem, 4vw, 2.5rem);
-            font-weight: 800;
-            text-align: center;
-            color: var(--gold);
-        }
-        .tab-q-box {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 1.5rem;
-            text-align: center;
-        }
-        .tab-q-text {
-            font-size: clamp(1rem, 2.5vw, 1.6rem);
-            font-weight: 600;
-            line-height: 1.5;
-            margin-bottom: 1rem;
-        }
-        .tab-answers {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: .75rem;
-            max-width: 700px;
-            margin: 0 auto;
-        }
-        .tab-ans {
-            padding: 1rem;
-            border-radius: 10px;
-            border: 1.5px solid var(--border);
-            font-size: 1rem;
-            font-weight: 500;
-            background: var(--card);
-            transition: .4s;
-        }
-        .tab-ans.correct {
-            border-color: var(--green);
-            background: rgba(63,185,80,.2);
-            color: var(--green);
-        }
-        .tab-ans.wrong {
-            border-color: rgba(255,255,255,.06);
-        }
-        .tab-podium {
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            gap: 1rem;
+        .question-card .q-result {
             margin-top: 1rem;
-        }
-        .tab-player-row {
-            display: flex;
-            align-items: center;
-            gap: .75rem;
-            padding: .6rem 1rem;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            font-size: 1rem;
-        }
-        .tab-player-row.answered {
-            border-color: var(--violet);
-        }
-        .tab-answered-count {
-            font-size: .85rem;
-            color: var(--text2);
-        }
-        .tab-scoreboard {
-            display: flex;
-            flex-direction: column;
-            gap: .5rem;
-            margin-top: .5rem;
-        }
-        .tab-score-row {
-            display: flex;
-            align-items: center;
-            gap: .75rem;
-            padding: .75rem 1rem;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            font-size: 1rem;
-            transition: .3s;
-        }
-        .tab-score-row.top1 {
-            border-color: var(--gold);
-            background: rgba(245,200,66,.08);
-        }
-        .tab-score-row.top2 {
-            border-color: var(--blue);
-        }
-        .tab-score-row.top3 {
-            border-color: var(--violet2);
-        }
-        .tab-score-rank {
-            width: 28px;
-            font-weight: 800;
-            font-size: 1.1rem;
-        }
-        .tab-score-name {
-            flex: 1;
-            font-weight: 600;
-        }
-        .tab-score-pts {
-            font-weight: 800;
-            color: var(--gold);
-            font-size: 1.1rem;
-        }
-        .tab-score-bar {
-            height: 6px;
-            background: var(--gold);
-            border-radius: 3px;
-            margin-top: .2rem;
-            transition: width .5s;
-        }
-        .waiting-screen {
             text-align: center;
-            padding: 3rem;
-            color: var(--text2);
+            font-size: 1.1rem;
+            font-weight: 600;
+            min-height: 2.5rem;
+            padding: .5rem;
+            border-radius: 10px;
         }
-        .waiting-screen .pulse {
-            font-size: 3rem;
-            animation: pulse 1.4s ease-in-out infinite;
+        .q-result.win {
+            color: #3fb950;
+            background: rgba(63, 185, 80, 0.08);
         }
-        @keyframes pulse {
-            0%, 100% { opacity: .4; }
-            50% { opacity: 1; }
+        .q-result.lose {
+            color: #f85149;
+            background: rgba(248, 81, 73, 0.08);
+        }
+        .q-result.draw {
+            color: #f5c842;
+            background: rgba(245, 200, 66, 0.08);
+        }
+        .question-card .q-tip {
+            font-size: .85rem;
+            color: #8b949e;
+            margin-top: .6rem;
+            font-style: italic;
+        }
+        .question-card .q-close-btn {
+            margin-top: 1rem;
+            width: 100%;
+            padding: .8rem;
+            border-radius: 12px;
+            background: #f5c842;
+            color: #000;
+            font-weight: 700;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: .15s;
+        }
+        .question-card .q-close-btn:hover {
+            background: #d4a832;
         }
 
-        /* ── End Screen ── */
+        /* ── Joystick ── */
+        #joystick-area {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 130px;
+            height: 130px;
+            z-index: 20;
+            pointer-events: auto;
+            touch-action: none;
+        }
+        #joystick-base {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            touch-action: none;
+            backdrop-filter: blur(4px);
+        }
+        #joystick-knob {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #9d4edd, #7b2fbe);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            touch-action: none;
+            box-shadow: 0 0 30px rgba(157, 78, 221, 0.3);
+            transition: box-shadow .2s;
+        }
+        #joystick-knob.active {
+            box-shadow: 0 0 50px rgba(157, 78, 221, 0.6);
+        }
+
+        /* ── End ── */
         #end-screen {
             align-items: center;
             justify-content: center;
             gap: 1.5rem;
             text-align: center;
+            padding: 2rem;
         }
         #end-screen h2 {
-            font-size: 2rem;
+            font-size: 2.5rem;
             font-weight: 800;
-            color: var(--gold);
+            color: #f5c842;
         }
-        .podium-display {
+        #end-screen .winner-emoji {
+            font-size: 4rem;
+        }
+        .end-podium {
             display: flex;
             flex-direction: column;
             gap: .6rem;
             width: 100%;
-            max-width: 380px;
+            max-width: 400px;
         }
-        .podium-item {
+        .end-podium .item {
             display: flex;
             align-items: center;
             gap: 1rem;
-            padding: .9rem 1.2rem;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            font-size: 1rem;
+            padding: .8rem 1.2rem;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
         }
-        .podium-item.rank1 {
-            border-color: var(--gold);
-            background: rgba(245,200,66,.1);
+        .end-podium .item.rank1 {
+            border-color: #f5c842;
+            background: rgba(245, 200, 66, 0.08);
         }
-        .podium-item.rank2 {
-            border-color: var(--blue);
+        .end-podium .item.rank2 {
+            border-color: #58a6ff;
         }
-        .podium-item.rank3 {
-            border-color: var(--violet2);
+        .end-podium .item.rank3 {
+            border-color: #9d4edd;
         }
-        .podium-medal {
-            font-size: 1.5rem;
+        .end-podium .item .pos {
+            font-size: 1.3rem;
+            width: 2rem;
         }
-        .podium-name {
+        .end-podium .item .ename {
             flex: 1;
             font-weight: 600;
             text-align: left;
         }
-        .podium-pts {
+        .end-podium .item .epts {
             font-weight: 800;
-            color: var(--gold);
+            color: #f5c842;
         }
-        .btn-restart {
+        .btn-replay {
             padding: .9rem 2.5rem;
-            border-radius: 12px;
-            font-size: 1rem;
+            border-radius: 14px;
+            font-size: 1.1rem;
             font-weight: 700;
-            background: var(--violet);
+            background: #7b2fbe;
             color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: .15s;
         }
-        .btn-restart:hover {
-            background: var(--violet2);
+        .btn-replay:hover {
+            background: #9d4edd;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+            #joystick-area {
+                width: 100px;
+                height: 100px;
+                bottom: 20px;
+                left: 20px;
+            }
+            #joystick-knob {
+                width: 40px;
+                height: 40px;
+            }
+            .question-card {
+                padding: 1.2rem;
+            }
+            .question-card .q-choices {
+                grid-template-columns: 1fr 1fr;
+            }
+            .hud-timer {
+                font-size: 1.4rem;
+            }
+            .hud-player .name {
+                max-width: 40px;
+            }
+            .room-code {
+                font-size: 1.1rem;
+                padding: .3rem .8rem;
+            }
+        }
+        @media (max-width: 400px) {
+            #joystick-area {
+                width: 80px;
+                height: 80px;
+                bottom: 12px;
+                left: 12px;
+            }
+            #joystick-knob {
+                width: 32px;
+                height: 32px;
+            }
         }
     </style>
 </head>
@@ -752,825 +568,1176 @@
     <!-- ════ LANDING ════ -->
     <div id="landing" class="screen active">
         <div>
-            <h1>⚡ Grammaire Battle</h1>
-            <p>Conjugaison · Nature · Accord · Orthographe</p>
+            <h1>⚡ Grammaire Arena</h1>
+            <p>Perce, réponds, vole !</p>
         </div>
         <div class="btn-group">
-            <button class="btn-main btn-master" data-target="master-setup">👑 Meneur de jeu</button>
-            <button class="btn-main btn-player" data-target="player-join">🎮 Joueur</button>
-            <button class="btn-main btn-tableau" data-target="tableau">📺 Tableau (affichage)</button>
+            <button class="btn-main btn-host" onclick="createRoom()">🚀 Créer une arène</button>
+            <button class="btn-main btn-join" onclick="showJoin()">🔗 Rejoindre une arène</button>
+            <button class="btn-main btn-spectate" onclick="spectate()">👁️ Regarder</button>
+        </div>
+        <div style="margin-top:1rem;font-size:.8rem;color:#8b949e">Partie cross‑device • 3 min • voleur de points</div>
+    </div>
+
+    <!-- ════ ROOM ════ -->
+    <div id="room-screen" class="screen">
+        <div class="header">
+            <h2>🏟️ Arène</h2>
+            <div class="room-code" id="room-code-display">••••</div>
+        </div>
+        <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+            <span style="color:#8b949e;font-size:.9rem">Joueurs :</span>
+            <span id="room-player-count" style="color:#f5c842;font-weight:700">0</span>
+        </div>
+        <div class="players-grid" id="room-players"></div>
+
+        <div style="margin-top:.5rem">
+            <div style="color:#8b949e;font-size:.85rem;margin-bottom:.4rem">Choisis ton emoji :</div>
+            <div class="emoji-picker" id="emoji-picker">
+                <button data-emoji="😀">😀</button>
+                <button data-emoji="😎">😎</button>
+                <button data-emoji="🤩">🤩</button>
+                <button data-emoji="🥳">🥳</button>
+                <button data-emoji="😄">😄</button>
+                <button data-emoji="🤠">🤠</button>
+                <button data-emoji="👻">👻</button>
+                <button data-emoji="🤖">🤖</button>
+                <button data-emoji="🐱">🐱</button>
+                <button data-emoji="🦊">🦊</button>
+                <button data-emoji="🐼">🐼</button>
+                <button data-emoji="🐉">🐉</button>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:.5rem;margin-top:.3rem;flex-wrap:wrap">
+            <input type="text" id="player-name-input" placeholder="Ton pseudo" maxlength="16"
+            style="flex:1;min-width:140px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:.7rem 1rem;color:#e6edf3;font-size:1rem">
+            <button onclick="updatePlayerProfile()" style="padding:.7rem 1.5rem;border-radius:10px;background:#7b2fbe;color:#fff;font-weight:600;border:none;cursor:pointer">Mettre à jour</button>
+        </div>
+
+        <div class="room-actions">
+            <button class="btn-launch" id="btn-launch" onclick="launchGame()" disabled>⚔️ Lancer la bataille</button>
+            <button class="btn-leave" onclick="leaveRoom()">✕ Quitter</button>
         </div>
     </div>
 
-    <!-- ════ MASTER SETUP ════ -->
-    <div id="master-setup" class="screen">
-        <h2>⚙️ Configuration de la partie</h2>
-        <div class="setup-grid">
-            <div class="setup-card">
-                <h3>Niveau</h3>
-                <div class="tag-grid" id="level-tags">
-                    <button class="tag on" data-val="6e">6ème</button>
-                    <button class="tag" data-val="5e">5ème</button>
-                    <button class="tag" data-val="4e">4ème</button>
-                    <button class="tag" data-val="3e">3ème</button>
+    <!-- ════ ARENA ════ -->
+    <div id="arena" class="screen">
+        <canvas id="arena-canvas"></canvas>
+
+        <div class="hud">
+            <div class="hud-left">
+                <div class="hud-timer" id="hud-timer">3:00</div>
+                <div class="hud-score" id="hud-score">🏆 <strong id="hud-mypts">0</strong> pts</div>
+            </div>
+            <div class="hud-players" id="hud-players"></div>
+        </div>
+
+        <div id="joystick-area">
+            <div id="joystick-base">
+                <div id="joystick-knob"></div>
+            </div>
+        </div>
+
+        <div id="question-overlay">
+            <div class="question-card" id="question-card">
+                <div class="duel-info">
+                    <span id="q-attacker">😀 toi</span>
+                    <span class="vs">⚔️ VS</span>
+                    <span id="q-defender">😎 adversaire</span>
                 </div>
-            </div>
-            <div class="setup-card">
-                <h3>Thèmes</h3>
-                <div class="tag-grid" id="theme-tags">
-                    <button class="tag on" data-val="conjugaison">Conjugaison</button>
-                    <button class="tag on" data-val="accord">Accord GN/sujet-verbe</button>
-                    <button class="tag on" data-val="nature">Nature & fonction</button>
-                    <button class="tag on" data-val="ortho">Orthographe</button>
-                    <button class="tag on" data-val="phrase">Phrase complexe</button>
-                    <button class="tag on" data-val="voix">Voix passive</button>
-                    <button class="tag on" data-val="temps">Valeurs des temps</button>
-                </div>
-            </div>
-            <div class="setup-card">
-                <h3>Nombre de questions</h3>
-                <select id="nb-questions">
-                    <option value="5">5 questions (rapide)</option>
-                    <option value="10" selected>10 questions</option>
-                    <option value="15">15 questions</option>
-                    <option value="20">20 questions</option>
-                </select>
-            </div>
-            <div class="setup-card">
-                <h3>Temps par question</h3>
-                <select id="timer-sec">
-                    <option value="15">15 secondes</option>
-                    <option value="20" selected>20 secondes</option>
-                    <option value="30">30 secondes</option>
-                    <option value="45">45 secondes</option>
-                    <option value="0">Sans limite</option>
-                </select>
-            </div>
-        </div>
-        <div class="setup-card">
-            <h3>Joueurs connectés <span id="player-count" style="color:var(--green)">(0)</span></h3>
-            <div class="players-list" id="players-list">
-                <div style="color:var(--text2);font-size:.85rem">En attente de joueurs…</div>
-            </div>
-        </div>
-        <button class="btn-start" id="btn-start" disabled>Lancer la partie</button>
-        <button style="margin-top:.5rem;background:none;color:var(--text2);font-size:.85rem;border:none;cursor:pointer" data-target="landing">← Retour</button>
-    </div>
-
-    <!-- ════ MASTER GAME ════ -->
-    <div id="master-game" class="screen">
-        <div class="master-top">
-            <h2 id="mg-level-label">Niveau —</h2>
-            <div style="display:flex;align-items:center;gap:1rem">
-                <span class="q-counter" id="mg-q-counter">Q 1/10</span>
-                <div class="timer-ring" id="timer-ring">
-                    <svg width="52" height="52" viewBox="0 0 52 52">
-                        <circle class="bg" cx="26" cy="26" r="22"/>
-                        <circle class="fg" id="timer-arc" cx="26" cy="26" r="22" stroke="var(--gold)" stroke-dasharray="138.2" stroke-dashoffset="0"/>
-                    </svg>
-                    <div class="timer-num" id="timer-num">20</div>
-                </div>
-            </div>
-        </div>
-        <div class="q-box">
-            <div class="q-theme-badge" id="mg-theme-badge">Conjugaison</div>
-            <div class="q-text" id="mg-q-text">Chargement…</div>
-            <div class="q-tip" id="mg-q-tip"></div>
-        </div>
-        <div class="answers-grid" id="mg-answers"></div>
-        <div class="reveal-bar">
-            <div class="reveal-info" id="mg-reveal-info"></div>
-            <button class="btn-next" id="btn-next" onclick="nextQuestion()">Question suivante →</button>
-        </div>
-        <div class="live-scores">
-            <h3>Classement en direct</h3>
-            <div id="mg-scoreboard"></div>
-        </div>
-    </div>
-
-    <!-- ════ PLAYER JOIN ════ -->
-    <div id="player-join" class="screen">
-        <div style="font-size:3rem">🎮</div>
-        <h2>Rejoindre la partie</h2>
-        <p>Entrez votre prénom pour rejoindre</p>
-        <input type="text" id="player-name-input" placeholder="Votre prénom…" maxlength="20">
-        <button class="btn-join" id="btn-join">Rejoindre !</button>
-        <div id="join-status" class="waiting" style="display:none"></div>
-        <button style="margin-top:.5rem;background:none;color:var(--text2);font-size:.85rem;border:none;cursor:pointer" data-target="landing">← Retour</button>
-    </div>
-
-    <!-- ════ PLAYER GAME ════ -->
-    <div id="player-game" class="screen">
-        <div class="player-header">
-            <div class="player-name-badge">Joueur : <strong id="pg-name"></strong></div>
-            <div class="player-pts" id="pg-pts">0 pt</div>
-        </div>
-        <div id="player-content">
-            <div class="player-waiting">
-                <div class="big">⏳</div>
-                <div style="margin-top:.5rem">En attente de la question…</div>
+                <div class="q-text" id="q-text">Question…</div>
+                <div class="q-choices" id="q-choices"></div>
+                <div class="q-result" id="q-result"></div>
+                <div class="q-tip" id="q-tip"></div>
+                <button class="q-close-btn" id="q-close-btn" style="display:none" onclick="closeQuestion()">Continuer</button>
             </div>
         </div>
     </div>
 
-    <!-- ════ TABLEAU ════ -->
-    <div id="tableau" class="screen">
-        <h1>⚡ Grammaire Battle</h1>
-        <div id="tab-content">
-            <div class="waiting-screen">
-                <div class="pulse">📺</div>
-                <div style="margin-top:1rem">En attente de la partie…</div>
-                <div style="margin-top:.5rem;font-size:.9rem">Le meneur lance la partie depuis son appareil</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ════ END SCREEN ════ -->
+    <!-- ════ END ════ -->
     <div id="end-screen" class="screen">
-        <div style="font-size:3rem">🏆</div>
-        <h2>Fin de partie !</h2>
-        <div class="podium-display" id="podium-display"></div>
-        <button class="btn-restart" id="btn-restart">Nouvelle partie</button>
+        <div class="winner-emoji" id="end-emoji">🏆</div>
+        <h2 id="end-title">Fin de la bataille !</h2>
+        <div class="end-podium" id="end-podium"></div>
+        <button class="btn-replay" onclick="resetGame()">🔄 Nouvelle arène</button>
     </div>
 
+    <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js">
+    </script>
     <script>
         // ══════════════════════════════════════════════
-        // QUESTION BANK
+        // QUESTIONS (réutilisées et enrichies)
         // ══════════════════════════════════════════════
-        const QUESTIONS = {
-            "6e": [
-                { theme: "conjugaison", q: "Quelle est la conjugaison correcte au présent ?<br><em>« Les enfants … dans la cour. »</em>", choices: ["jouent", "joues", "joue", "jouez"], correct: 0, tip: "Sujet = Les enfants (3e pers. pluriel)" },
-                { theme: "conjugaison", q: "Complète au présent de l'indicatif :<br><em>« Tu … ton cartable. »</em>", choices: ["prend", "prends", "prendes", "prendre"], correct: 1, tip: "Verbe prendre, 2e pers. sing." },
-                { theme: "conjugaison", q: "Quel temps est utilisé ?<br><em>« Hier, je mangeais une pomme. »</em>", choices: ["Présent", "Passé composé", "Imparfait", "Futur"], correct: 2 },
-                { theme: "conjugaison", q: "Conjugue au passé composé :<br><em>« Elle … ses clés. »</em>", choices: ["a perdu", "est perdu", "avait perdu", "perdait"], correct: 0, tip: "Auxiliaire avoir + participe passé" },
-                { theme: "conjugaison", q: "Conjugue au futur simple :<br><em>« Demain, nous … à Paris. »</em>", choices: ["allons", "irons", "allions", "allaient"], correct: 1, tip: "Futur du verbe aller, 1e pers. pluriel" },
-                { theme: "nature", q: "Quelle est la nature de « rapidement » dans :<br><em>« Il court rapidement. »</em>", choices: ["Adjectif", "Adverbe", "Verbe", "Nom"], correct: 1 },
-                { theme: "nature", q: "Dans « une belle maison », quel mot est un adjectif qualificatif ?", choices: ["une", "belle", "maison", "Dans"], correct: 1 },
-                { theme: "nature", q: "Quelle est la fonction de « le chien » dans :<br><em>« Le chien aboie. »</em>", choices: ["COD", "Sujet", "Attribut", "CC lieu"], correct: 1 },
-                { theme: "nature", q: "Quel est le COD dans :<br><em>« Marie mange une pomme. »</em>", choices: ["Marie", "mange", "une pomme", "—"], correct: 2 },
-                { theme: "accord", q: "Quelle phrase est correctement accordée ?", choices: ["Les filles est heureuses", "Les filles sont heureuses", "Les fille sont heureuses", "Les filles sont heureux"], correct: 1, tip: "Sujet féminin pluriel → adjectif féminin pluriel" },
-                { theme: "accord", q: "Accord correct du GN :<br><em>« un vent … »</em>", choices: ["froid", "froide", "froids", "froides"], correct: 0, tip: "vent = masculin singulier" },
-                { theme: "accord", q: "Complète : <em>« Les livres que j'ai … »</em>", choices: ["lus", "lu", "lue", "lues"], correct: 0, tip: "COD placé avant l'auxiliaire avoir" },
-                { theme: "ortho", q: "Quelle est la bonne orthographe ?", choices: ["beaucoup", "baucoup", "beaucoups", "beauccoup"], correct: 0 },
-                { theme: "ortho", q: "Choisir la bonne forme :<br><em>« Il … froid aujourd'hui. »</em>", choices: ["fais", "fait", "fes", "fée"], correct: 1 },
-                { theme: "ortho", q: "Quelle orthographe est correcte ?", choices: ["appartement", "appertement", "apartement", "appaetement"], correct: 0 },
-                { theme: "ortho", q: "Choisir :<br><em>« Nous nous sommes … »</em>", choices: ["levé", "levés", "levées", "levé·e·s"], correct: 1, tip: "Sujet = nous (pluriel)" },
-            ],
-            "5e": [
-                { theme: "conjugaison", q: "Conjugue à l'imparfait :<br><em>« Quand j'étais petit, je … souvent. »</em> (rire)", choices: ["riais", "riait", "riions", "rièrent"], correct: 0 },
-                { theme: "conjugaison", q: "Quel est le mode de : <em>« Sois sage ! »</em>", choices: ["Indicatif", "Impératif", "Subjonctif", "Infinitif"], correct: 1 },
-                { theme: "conjugaison", q: "Conjugue au plus-que-parfait :<br><em>« Il … avant que je parte. »</em> (finir)", choices: ["finissait", "aura fini", "avait fini", "eut fini"], correct: 2, tip: "Auxiliaire avoir à l'imparfait + participe passé" },
-                { theme: "conjugaison", q: "Distingue les temps :<br><em>« Je travaillerai demain. »</em>", choices: ["Présent", "Futur simple", "Conditionnel", "Futur antérieur"], correct: 1 },
-                { theme: "nature", q: "Quelle est la nature de « que » dans :<br><em>« Je crois que tu as raison. »</em>", choices: ["Pronom relatif", "Conjonction de subordination", "Adverbe", "Déterminant"], correct: 1 },
-                { theme: "nature", q: "Quel mot est un pronom personnel COI ?<br><em>« Il lui parle. »</em>", choices: ["Il", "lui", "parle", "—"], correct: 1 },
-                { theme: "accord", q: "Accord correct :<br><em>« Les robes qu'elle a … »</em>", choices: ["cousues", "cousu", "cousus", "cousu·e·s"], correct: 0, tip: "COD féminin pluriel avant avoir" },
-                { theme: "accord", q: "Quelle phrase est correcte ?", choices: ["Elle s'est blessée", "Elle s'est blessé", "Elles se sont blessé", "Elles se sont blessée"], correct: 0 },
-                { theme: "ortho", q: "Choisir la bonne orthographe :<br><em>« … il pleut, … je reste. »</em>", choices: ["Si / si", "S'il / alors", "S'y / si", "Si / aussi"], correct: 1 },
-                { theme: "ortho", q: "Quelle est la bonne forme ?<br><em>« Je suis … de te voir. »</em>", choices: ["ravi", "ravie", "ravit", "ravis"], correct: 0, tip: "Sujet = je (masculin dans ce contexte)" },
-                { theme: "phrase", q: "Quelle proposition est subordonnée relative ?", choices: ["parce qu'il fait beau", "qui court vite", "quand je serai grand", "afin de partir"], correct: 1 },
-                { theme: "phrase", q: "Identifie le type de subordonnée :<br><em>« Je pars quand tu arriveras. »</em>", choices: ["Relative", "Circonstancielle de temps", "Complétive", "Circonstancielle de cause"], correct: 1 },
-            ],
-            "4e": [
-                { theme: "conjugaison", q: "Conjugue au subjonctif présent :<br><em>« Il faut que tu … tes devoirs. »</em> (faire)", choices: ["fais", "feras", "fasses", "ferais"], correct: 2 },
-                { theme: "conjugaison", q: "Quel est le mode de :<br><em>« Je voudrais partir. »</em>", choices: ["Indicatif présent", "Conditionnel présent", "Subjonctif présent", "Impératif"], correct: 1 },
-                { theme: "conjugaison", q: "Conjugue au passé simple :<br><em>« Il … la vérité. »</em> (dire)", choices: ["disait", "dit", "dirait", "dise"], correct: 1, tip: "Passé simple = temps du récit littéraire" },
-                { theme: "voix", q: "Identifie la voix :<br><em>« Le gâteau a été mangé par les élèves. »</em>", choices: ["Voix active", "Voix passive", "Voix pronominale", "—"], correct: 1 },
-                { theme: "voix", q: "Mets à la voix active :<br><em>« La porte est ouverte par le vent. »</em>", choices: ["Le vent ouvre la porte", "La porte ouvre le vent", "La porte est ouverte", "On ouvre la porte"], correct: 0 },
-                { theme: "voix", q: "Quelle phrase est à la voix pronominale ?", choices: ["Il lave la voiture", "Il est lavé", "Il se lave", "La voiture est lavée"], correct: 2 },
-                { theme: "accord", q: "Accord du participe passé avec être :<br><em>« Elles sont … »</em> (partir)", choices: ["parti", "parties", "partis", "partie"], correct: 1 },
-                { theme: "phrase", q: "Identifie la subordonnée :<br><em>« Bien qu'il soit tard, il travaille. »</em>", choices: ["Relative", "C. de temps", "C. de concession", "C. de cause"], correct: 2 },
-                { theme: "phrase", q: "Quel connecteur logique introduit une cause ?", choices: ["donc", "cependant", "parce que", "afin que"], correct: 2 },
-                { theme: "nature", q: "Quelle est la nature de « dont » dans :<br><em>« Le livre dont je parle… »</em>", choices: ["Conjonction", "Pronom relatif", "Adverbe", "Préposition"], correct: 1 },
-                { theme: "ortho", q: "Quelle forme est correcte ?<br><em>« … tu viennes, je serai là. »</em>", choices: ["Si", "Quoi que", "Quoique", "Bien que"], correct: 3, tip: "Bien que + subjonctif = concession" },
-            ],
-            "3e": [
-                { theme: "conjugaison", q: "Conjugue au subjonctif passé :<br><em>« Je doute qu'il … à temps. »</em> (arriver)", choices: ["arrive", "est arrivé", "soit arrivé", "arrivera"], correct: 2 },
-                { theme: "temps", q: "Quelle est la valeur de l'imparfait dans :<br><em>« Il lisait chaque soir. »</em>", choices: ["Action ponctuelle", "Habitude passée", "Action récente", "Futur proche"], correct: 1 },
-                { theme: "temps", q: "Valeur du présent :<br><em>« César traverse le Rubicon en 49 av. J.-C. »</em>", choices: ["Présent d'énonciation", "Présent de vérité générale", "Présent historique", "Présent de narration"], correct: 2 },
-                { theme: "temps", q: "Concordance des temps — complète :<br><em>« Il pensait que tu … raison. »</em>", choices: ["as", "avais", "auras", "aies"], correct: 1, tip: "Principale au passé → subordonnée à l'imparfait" },
-                { theme: "temps", q: "Quel temps exprime l'antériorité par rapport au passé simple ?", choices: ["Imparfait", "Plus-que-parfait", "Passé antérieur", "Futur antérieur"], correct: 2 },
-                { theme: "voix", q: "Transforme à la voix passive :<br><em>« Le jury a récompensé l'auteur. »</em>", choices: ["L'auteur a été récompensé par le jury", "Le jury est récompensé par l'auteur", "L'auteur récompense le jury", "L'auteur était récompensé"], correct: 0 },
-                { theme: "phrase", q: "Quel type de subordonnée exprime le but ?", choices: ["Parce que tu travailles", "Pour que tu réussisses", "Bien que tu travailles", "Dès que tu partiras"], correct: 1 },
-                { theme: "phrase", q: "Identifie la proposition :<br><em>« Il est parti sans que je le sache. »</em>", choices: ["Sub. relative", "Sub. complétive", "Sub. circonstancielle", "Prop. indépendante"], correct: 2 },
-                { theme: "accord", q: "Accord complexe :<br><em>« Les problèmes qu'on leur a … »</em> (poser)", choices: ["posé", "posés", "posée", "posées"], correct: 1, tip: "COD pluriel masculin placé avant avoir" },
-                { theme: "nature", q: "Quelle est la nature de « lequel » dans :<br><em>« L'arbre sous lequel il dort… »</em>", choices: ["Adjectif interrogatif", "Pronom relatif", "Pronom interrogatif", "Déterminant"], correct: 1 },
-                { theme: "ortho", q: "Choisir la forme correcte :<br><em>« … ses efforts, il a échoué. »</em>", choices: ["Malgré", "Malgres", "Malgrès", "Malgret"], correct: 0 },
-                { theme: "temps", q: "Valeur du conditionnel :<br><em>« Il serait né en 1850. »</em>", choices: ["Hypothèse", "Fait certain", "Ordre atténué", "Fait rapporté incertain"], correct: 3 },
-            ]
-        };
+        const QUESTION_BANK = [
+            // 6e
+            { theme: "conjugaison", q: "« Les enfants … dans la cour. » (présent)", choices: ["jouent", "joues", "joue",
+                    "jouez"
+                ], correct: 0 },
+            { theme: "conjugaison", q: "« Tu … ton cartable. » (présent)", choices: ["prend", "prends", "prendes",
+                    "prendre"
+                ], correct: 1 },
+            { theme: "conjugaison", q: "« Hier, je … une pomme. » (imparfait)", choices: ["mangeais", "mangeait",
+                    "mangeaient", "mangea"
+                ], correct: 0 },
+            { theme: "conjugaison", q: "« Elle … ses clés. » (passé composé)", choices: ["a perdu", "est perdu",
+                    "avait perdu", "perdait"
+                ], correct: 0 },
+            { theme: "conjugaison", q: "« Demain, nous … à Paris. » (futur)", choices: ["allons", "irons", "allions",
+                    "allaient"
+                ], correct: 1 },
+            { theme: "nature", q: "Nature de « rapidement » : « Il court rapidement. »", choices: ["Adjectif", "Adverbe",
+                    "Verbe", "Nom"
+                ], correct: 1 },
+            { theme: "nature", q: "Dans « une belle maison », l'adjectif est :", choices: ["une", "belle", "maison",
+                    "Dans"
+                ], correct: 1 },
+            { theme: "nature", q: "Fonction de « le chien » : « Le chien aboie. »", choices: ["COD", "Sujet", "Attribut",
+                    "CC lieu"
+                ], correct: 1 },
+            { theme: "accord", q: "Phrase correctement accordée :", choices: ["Les filles est heureuses",
+                    "Les filles sont heureuses", "Les fille sont heureuses", "Les filles sont heureux"
+                ], correct: 1 },
+            { theme: "accord", q: "« un vent … » (bon accord)", choices: ["froid", "froide", "froids", "froides"],
+                correct: 0 },
+            { theme: "ortho", q: "Bonne orthographe :", choices: ["beaucoup", "baucoup", "beaucoups", "beauccoup"],
+                correct: 0 },
+            { theme: "ortho", q: "« Il … froid aujourd'hui. »", choices: ["fais", "fait", "fes", "fée"], correct: 1 },
+            { theme: "ortho", q: "Bonne orthographe :", choices: ["appartement", "appertement", "apartement",
+                    "appaetement"
+                ], correct: 0 },
+            // 5e
+            { theme: "conjugaison", q: "« Quand j'étais petit, je … souvent. » (rire)", choices: ["riais", "riait",
+                    "riions", "rièrent"
+                ], correct: 0 },
+            { theme: "conjugaison", q: "Mode de « Sois sage ! »", choices: ["Indicatif", "Impératif", "Subjonctif",
+                    "Infinitif"
+                ], correct: 1 },
+            { theme: "conjugaison", q: "« Il … avant que je parte. » (plus-que-parfait)", choices: ["finissait",
+                    "aura fini", "avait fini", "eut fini"
+                ], correct: 2 },
+            { theme: "nature", q: "Nature de « que » : « Je crois que tu as raison. »", choices: [
+                    "Pronom relatif", "Conjonction de subordination", "Adverbe", "Déterminant"
+                ], correct: 1 },
+            { theme: "nature", q: "COI dans « Il lui parle. »", choices: ["Il", "lui", "parle", "—"], correct: 1 },
+            { theme: "accord", q: "« Les robes qu'elle a … »", choices: ["cousues", "cousu", "cousus", "cousu·e·s"],
+                correct: 0 },
+            { theme: "ortho", q: "« … il pleut, … je reste. »", choices: ["Si / si", "S'il / alors", "S'y / si",
+                    "Si / aussi"
+                ], correct: 1 },
+            // 4e / 3e
+            { theme: "conjugaison", q: "« Il faut que tu … tes devoirs. » (subjonctif)", choices: ["fais", "feras",
+                    "fasses", "ferais"
+                ], correct: 2 },
+            { theme: "conjugaison", q: "Mode de « Je voudrais partir. »", choices: ["Indicatif", "Conditionnel",
+                    "Subjonctif", "Impératif"
+                ], correct: 1 },
+            { theme: "conjugaison", q: "« Il … la vérité. » (passé simple)", choices: ["disait", "dit", "dirait",
+                    "dise"
+                ], correct: 1 },
+            { theme: "voix", q: "Voix de « Le gâteau a été mangé par les élèves. »", choices: ["Active", "Passive",
+                    "Pronominale", "—"
+                ], correct: 1 },
+            { theme: "voix", q: "Active de « La porte est ouverte par le vent. »", choices: [
+                    "Le vent ouvre la porte", "La porte ouvre le vent", "La porte est ouverte", "On ouvre la porte"
+                ], correct: 0 },
+            { theme: "accord", q: "« Elles sont … » (partir)", choices: ["parti", "parties", "partis", "partie"],
+                correct: 1 },
+            { theme: "phrase", q: "Subordonnée dans « Bien qu'il soit tard, il travaille. »", choices: ["Relative",
+                    "C. de temps", "C. de concession", "C. de cause"
+                ], correct: 2 },
+            { theme: "temps", q: "Valeur de l'imparfait : « Il lisait chaque soir. »", choices: ["Action ponctuelle",
+                    "Habitude passée", "Action récente", "Futur proche"
+                ], correct: 1 },
+            { theme: "temps", q: "Valeur du présent : « César traverse le Rubicon en 49 av. J.-C. »", choices: [
+                    "Présent d'énonciation", "Présent de vérité générale", "Présent historique",
+                    "Présent de narration"
+                ], correct: 2 },
+        ];
 
-        const THEME_LABELS = {
-            conjugaison: "Conjugaison",
-            accord: "Accord",
-            nature: "Nature & Fonction",
-            ortho: "Orthographe",
-            phrase: "Phrase complexe",
-            voix: "Voix passive",
-            temps: "Valeurs des temps"
-        };
-        const MEDALS = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣"];
-        const CIRCUM = 138.2;
+        function shuffleArray(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
         // ══════════════════════════════════════════════
-        // STATE
+        // PEERJS NETWORKING
         // ══════════════════════════════════════════════
-        let role = null; // "master" | "player" | "tableau"
-        let myName = "";
-        let myPts = 0;
-        let myStreak = 0;
+        let peer = null;
+        let connections = {};
+        let isHost = false;
+        let roomId = '';
+        let myId = '';
+        let myEmoji = '😀';
+        let myName = 'Toi';
+        let gameState = null;
+        let gameInterval = null;
+        let canvas, ctx;
+        let W, H;
+        let joystickActive = false;
+        let joystickDX = 0,
+            joystickDY = 0;
+        let animationId = null;
+        let localPos = { x: 0, y: 0 };
+        let questionActive = false;
         let myAnswered = false;
-        let gameState = {
-            started: false,
-            players: {}, // {name: {pts, streak, answered}}
-            questions: [],
-            qIndex: 0,
-            revealed: false,
-            timerSec: 20,
-            ended: false
-        };
-        let timerInterval = null;
-        let timerLeft = 0;
+        let myStealCooldown = {}; // track who we've stolen from
+        let gameOver = false;
 
-        // ══════════════════════════════════════════════
-        // BROADCAST CHANNEL
-        // ══════════════════════════════════════════════
-        const CH_NAME = "grammaire_battle_v2";
-        let bc = null;
+        // ── DOM refs ──
+        const $ = id => document.getElementById(id);
+        const landing = $('landing');
+        const roomScreen = $('room-screen');
+        const arena = $('arena');
+        const endScreen = $('end-screen');
+        const roomCodeDisplay = $('room-code-display');
+        const roomPlayers = $('room-players');
+        const roomPlayerCount = $('room-player-count');
+        const emojiPicker = $('emoji-picker');
+        const playerNameInput = $('player-name-input');
+        const btnLaunch = $('btn-launch');
+        const canvasEl = $('arena-canvas');
+        const hudTimer = $('hud-timer');
+        const hudMyPts = $('hud-mypts');
+        const hudPlayers = $('hud-players');
+        const joystickBase = $('joystick-base');
+        const joystickKnob = $('joystick-knob');
+        const questionOverlay = $('question-overlay');
+        const qAttacker = $('q-attacker');
+        const qDefender = $('q-defender');
+        const qText = $('q-text');
+        const qChoices = $('q-choices');
+        const qResult = $('q-result');
+        const qTip = $('q-tip');
+        const qCloseBtn = $('q-close-btn');
+        const endEmoji = $('end-emoji');
+        const endTitle = $('end-title');
+        const endPodium = $('end-podium');
 
-        function initBC() {
-            if (bc) bc.close();
-            try {
-                bc = new BroadcastChannel(CH_NAME);
-                bc.onmessage = handleMessage;
-            } catch (e) {
-                bc = null;
-            }
+        // ── Emoji selection ──
+        let selectedEmoji = '😀';
+        emojiPicker.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                emojiPicker.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedEmoji = btn.dataset.emoji;
+                myEmoji = selectedEmoji;
+                if (peer && myId) updatePlayerProfile();
+            });
+        });
+        // select first by default
+        emojiPicker.querySelector('button')?.classList.add('selected');
+
+        // ── Screen navigation ──
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            $(id).classList.add('active');
         }
 
-        function broadcast(msg) {
-            const data = JSON.stringify({ ...msg, _ts: Date.now() });
-            try {
-                localStorage.setItem(CH_NAME + "_last", data);
-            } catch (e) { /* ignore */ }
-            if (bc) bc.postMessage(msg);
+        // ── Create Room (Host) ──
+        function createRoom() {
+            isHost = true;
+            const id = 'arena-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+            roomId = id;
+            peer = new Peer(id, {
+                debug: 0,
+                config: { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] }
+            });
+            peer.on('open', (pid) => {
+                myId = pid;
+                roomCodeDisplay.textContent = id;
+                showScreen('room-screen');
+                updateRoomUI();
+                btnLaunch.disabled = true;
+                // wait for players
+                peer.on('connection', (conn) => {
+                    connections[conn.peer] = conn;
+                    conn.on('data', (data) => handlePeerData(conn.peer, data));
+                    conn.on('close', () => { delete connections[conn.peer];
+                        updateRoomUI(); });
+                    updateRoomUI();
+                });
+                // announce self
+                broadcastToRoom({ type: 'player_join', id: myId, name: myName || 'Toi', emoji: myEmoji });
+                // host auto-ready
+                setTimeout(() => { btnLaunch.disabled = Object.keys(connections).length === 0; }, 300);
+            });
+            peer.on('error', (e) => { console.warn('Peer error:', e); });
         }
 
-        // Fallback polling
-        setInterval(() => {
-            if (!bc) return;
-            try {
-                const raw = localStorage.getItem(CH_NAME + "_last");
-                if (!raw) return;
-                const msg = JSON.parse(raw);
-                if (msg._ts && Date.now() - msg._ts < 800) {
-                    handleMessage({ data: msg });
-                }
-            } catch (e) { /* ignore */ }
-        }, 400);
+        // ── Join Room ──
+        function showJoin() {
+            const code = prompt('🔑 Entrez le code de l\'arène :');
+            if (!code) return;
+            joinRoom(code.trim().toUpperCase());
+        }
 
-        function handleMessage(event) {
-            const msg = event.data;
-            if (!msg || !msg.type) return;
+        function joinRoom(code) {
+            roomId = code;
+            isHost = false;
+            peer = new Peer({
+                debug: 0,
+                config: { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] }
+            });
+            peer.on('open', (pid) => {
+                myId = pid;
+                roomCodeDisplay.textContent = code;
+                showScreen('room-screen');
+                // connect to host
+                const conn = peer.connect(code);
+                conn.on('open', () => {
+                    connections[code] = conn;
+                    conn.on('data', (data) => handlePeerData(code, data));
+                    conn.on('close', () => { delete connections[code];
+                        updateRoomUI(); });
+                    broadcastToRoom({ type: 'player_join', id: myId, name: myName || 'Toi', emoji: myEmoji });
+                    updateRoomUI();
+                });
+                conn.on('error', (e) => { console.warn('Connection error:', e);
+                    alert('Impossible de rejoindre l\'arène. Vérifie le code.'); });
+                peer.on('connection', (c) => {
+                    // other players connecting to us (if any)
+                    connections[c.peer] = c;
+                    c.on('data', (data) => handlePeerData(c.peer, data));
+                    c.on('close', () => { delete connections[c.peer];
+                        updateRoomUI(); });
+                    updateRoomUI();
+                });
+                btnLaunch.disabled = true;
+            });
+            peer.on('error', (e) => { console.warn('Peer error:', e);
+                alert('Erreur de connexion. Vérifie le code.'); });
+        }
 
-            if (msg.type === "PLAYER_JOIN") {
-                if (role === "master") {
-                    if (!gameState.players[msg.name]) {
-                        gameState.players[msg.name] = { pts: 0, streak: 0, answered: false };
-                        refreshSetupPlayers();
-                        broadcast({ type: "STATE_SYNC", gameState });
-                    }
-                }
-            }
+        // ── Spectate ──
+        function spectate() {
+            const code = prompt('👁️ Code de l\'arène à regarder :');
+            if (!code) return;
+            // spectate as a passive observer
+            roomId = code;
+            isHost = false;
+            peer = new Peer({
+                debug: 0,
+                config: { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] }
+            });
+            peer.on('open', (pid) => {
+                myId = pid;
+                myName = '👁️ Spectateur';
+                roomCodeDisplay.textContent = code;
+                showScreen('room-screen');
+                const conn = peer.connect(code);
+                conn.on('open', () => {
+                    connections[code] = conn;
+                    conn.on('data', (data) => handlePeerData(code, data));
+                    conn.on('close', () => { delete connections[code];
+                        updateRoomUI(); });
+                    broadcastToRoom({ type: 'spectator_join', id: myId });
+                    updateRoomUI();
+                });
+                conn.on('error', () => { alert('Impossible de se connecter en spectateur.'); });
+                btnLaunch.disabled = true;
+            });
+        }
 
-            if (msg.type === "STATE_SYNC") {
-                gameState = msg.gameState;
-                if (role === "player") syncPlayerView();
-                if (role === "tableau") syncTableauView();
-            }
+        // ── Broadcast ──
+        function broadcastToRoom(msg) {
+            const data = { ...msg, from: myId };
+            Object.values(connections).forEach(conn => {
+                try { conn.send(data); } catch (e) {}
+            });
+            // also handle locally if we're the host
+            if (isHost) handlePeerData(myId, data);
+        }
 
-            if (msg.type === "PLAYER_ANSWER") {
-                if (role === "master") {
-                    const q = gameState.questions[gameState.qIndex];
-                    if (!q) return;
-                    const correct = msg.ansIndex === q.correct;
-                    const p = gameState.players[msg.name];
-                    if (p && !p.answered) {
-                        p.answered = true;
-                        if (correct) {
-                            const bonus = Math.max(0, Math.round(timerLeft / gameState.timerSec * 50));
-                            const streak = (p.streak || 0) + 1;
-                            const streakBonus = streak >= 3 ? 20 : streak >= 2 ? 10 : 0;
-                            p.pts += 100 + bonus + streakBonus;
-                            p.streak = streak;
-                        } else {
-                            p.streak = 0;
+        // ── Handle incoming data ──
+        function handlePeerData(senderId, data) {
+            if (!data || !data.type) return;
+            switch (data.type) {
+                case 'player_join':
+                    if (isHost) {
+                        // store player info
+                        if (!gameState) gameState = createInitialState();
+                        if (!gameState.players[data.id]) {
+                            gameState.players[data.id] = {
+                                id: data.id,
+                                name: data.name || 'Anonyme',
+                                emoji: data.emoji || '😀',
+                                pts: 30,
+                                x: Math.random() * 0.8 + 0.1,
+                                y: Math.random() * 0.8 + 0.1,
+                                alive: true,
+                                streak: 0,
+                                answered: false,
+                                blocked: false
+                            };
+                            // assign spawn position
+                            const p = gameState.players[data.id];
+                            p.x = 0.1 + Math.random() * 0.8;
+                            p.y = 0.1 + Math.random() * 0.8;
                         }
-                        refreshMasterScoreboard();
-                        broadcast({ type: "STATE_SYNC", gameState });
-                        checkAllAnswered();
+                        // broadcast updated state
+                        broadcastToRoom({ type: 'state_sync', state: gameState });
+                        updateRoomUI();
                     }
-                }
+                    break;
+
+                case 'spectator_join':
+                    // just update UI
+                    updateRoomUI();
+                    break;
+
+                case 'state_sync':
+                    if (!isHost) {
+                        gameState = data.state;
+                        updateRoomUI();
+                        if (gameState.started) {
+                            enterArena();
+                        }
+                    }
+                    break;
+
+                case 'player_update':
+                    if (isHost && gameState && gameState.players[data.id]) {
+                        const p = gameState.players[data.id];
+                        p.x = data.x;
+                        p.y = data.y;
+                        p.emoji = data.emoji || p.emoji;
+                        p.name = data.name || p.name;
+                        // check collisions
+                        checkCollisions(data.id);
+                    }
+                    break;
+
+                case 'player_answer':
+                    if (isHost && questionActive) {
+                        handleAnswer(senderId, data.choiceIndex);
+                    }
+                    break;
+
+                case 'question_close':
+                    if (isHost) {
+                        questionActive = false;
+                        broadcastToRoom({ type: 'question_closed' });
+                    }
+                    break;
+
+                case 'question_closed':
+                    if (!isHost) {
+                        questionActive = false;
+                        questionOverlay.classList.remove('show');
+                    }
+                    break;
+
+                case 'game_start':
+                    if (!isHost) {
+                        gameState = data.state;
+                        enterArena();
+                    }
+                    break;
+
+                case 'game_end':
+                    gameOver = true;
+                    if (isHost) clearInterval(gameInterval);
+                    showEndScreen(data.results);
+                    break;
+
+                case 'ping':
+                    // respond to host ping
+                    break;
+
+                default:
+                    break;
             }
         }
 
-        // ══════════════════════════════════════════════
-        // NAVIGATION
-        // ══════════════════════════════════════════════
-        function goTo(id) {
-            document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-            const target = document.getElementById(id);
-            if (target) target.classList.add("active");
-
-            // Role management
-            if (id === "master-setup") {
-                role = "master";
-                initBC();
-                startListeningJoins();
-            }
-            if (id === "player-join") {
-                role = "player";
-                initBC();
-            }
-            if (id === "tableau") {
-                role = "tableau";
-                initBC();
-            }
-        }
-
-        // Attach navigation to all [data-target] buttons
-        document.addEventListener("click", (e) => {
-            const btn = e.target.closest("[data-target]");
-            if (btn) {
-                e.preventDefault();
-                goTo(btn.dataset.target);
-            }
-        });
-
-        // ══════════════════════════════════════════════
-        // SETUP — MASTER
-        // ══════════════════════════════════════════════
-        document.querySelectorAll("#level-tags .tag, #theme-tags .tag").forEach(btn => {
-            btn.addEventListener("click", () => {
-                if (btn.closest("#level-tags")) {
-                    document.querySelectorAll("#level-tags .tag").forEach(b => b.classList.remove("on"));
-                    btn.classList.add("on");
-                } else {
-                    btn.classList.toggle("on");
+        // ── Room UI ──
+        function updateRoomUI() {
+            const players = gameState ? Object.values(gameState.players) : [];
+            const allIds = Object.keys(connections);
+            // show all connected players (including host if not in gameState yet)
+            const displayPlayers = [...players];
+            // add pending connections not yet in gameState
+            allIds.forEach(id => {
+                if (!displayPlayers.find(p => p.id === id)) {
+                    displayPlayers.push({ id, name: '…', emoji: '⏳', pts: 0, alive: true });
                 }
-                updateStartBtn();
             });
-        });
-
-        function updateStartBtn() {
-            const themes = [...document.querySelectorAll("#theme-tags .tag.on")].map(b => b.dataset.val);
-            const hasPlayers = Object.keys(gameState.players).length > 0;
-            document.getElementById("btn-start").disabled = (themes.length === 0 || !hasPlayers);
-        }
-
-        function startListeningJoins() {
-            broadcast({ type: "MASTER_READY" });
-        }
-
-        function refreshSetupPlayers() {
-            const names = Object.keys(gameState.players);
-            document.getElementById("player-count").textContent = `(${names.length})`;
-            const list = document.getElementById("players-list");
-            if (names.length === 0) {
-                list.innerHTML = '<div style="color:var(--text2);font-size:.85rem">En attente de joueurs…</div>';
-                return;
+            // add self if not present
+            if (!displayPlayers.find(p => p.id === myId)) {
+                displayPlayers.push({ id: myId, name: myName || 'Toi', emoji: myEmoji, pts: 0, alive: true });
             }
-            list.innerHTML = names.map(n => `
-                <div class="player-chip">
-                    <span class="dot"></span>
-                    <span>${n}</span>
-                    <button class="kick" onclick="kickPlayer('${n}')" title="Retirer">✕</button>
+            roomPlayerCount.textContent = displayPlayers.length;
+            roomPlayers.innerHTML = displayPlayers.map(p => `
+                <div class="player-tag">
+                    <span class="emoji">${p.emoji || '😀'}</span>
+                    <span class="name">${p.name || 'Anonyme'}</span>
+                    ${p.id === myId ? ' <span style="font-size:.7rem;color:#f5c842">(toi)</span>' : ''}
+                    ${p.id === roomId ? ' 👑' : ''}
                 </div>
-            `).join("");
-            updateStartBtn();
-        }
+            `).join('');
 
-        function kickPlayer(name) {
-            delete gameState.players[name];
-            refreshSetupPlayers();
-            broadcast({ type: "STATE_SYNC", gameState });
-        }
-
-        // ══════════════════════════════════════════════
-        // START GAME
-        // ══════════════════════════════════════════════
-        function startGame() {
-            const level = document.querySelector("#level-tags .tag.on")?.dataset.val || "5e";
-            const themes = [...document.querySelectorAll("#theme-tags .tag.on")].map(b => b.dataset.val);
-            const nb = parseInt(document.getElementById("nb-questions").value);
-            const timer = parseInt(document.getElementById("timer-sec").value);
-
-            let pool = (QUESTIONS[level] || []).filter(q => themes.includes(q.theme));
-            if (pool.length < nb) {
-                const allQ = Object.values(QUESTIONS).flat().filter(q => themes.includes(q.theme) && !pool.includes(q));
-                pool = [...pool, ...allQ];
+            if (isHost) {
+                const hasPlayers = displayPlayers.length > 1; // at least host + 1 other
+                btnLaunch.disabled = !hasPlayers || (gameState && gameState.started);
             }
-            pool = pool.sort(() => Math.random() - 0.5).slice(0, nb);
-
-            if (pool.length === 0) {
-                alert("Aucune question ne correspond aux thèmes sélectionnés !");
-                return;
-            }
-
-            gameState.started = true;
-            gameState.questions = pool;
-            gameState.qIndex = 0;
-            gameState.revealed = false;
-            gameState.timerSec = timer;
-            gameState.ended = false;
-
-            Object.keys(gameState.players).forEach(n => {
-                gameState.players[n].pts = 0;
-                gameState.players[n].streak = 0;
-                gameState.players[n].answered = false;
-            });
-
-            document.getElementById("mg-level-label").textContent = `Niveau ${level}`;
-            document.getElementById("mg-q-counter").textContent = `Q 1/${pool.length}`;
-
-            broadcast({ type: "STATE_SYNC", gameState });
-            goTo("master-game");
-            showMasterQuestion();
+            // update room code
+            roomCodeDisplay.textContent = roomId || '••••';
         }
 
-        document.getElementById("btn-start").addEventListener("click", startGame);
-
-        // ══════════════════════════════════════════════
-        // MASTER — QUESTION FLOW
-        // ══════════════════════════════════════════════
-        function showMasterQuestion() {
-            const q = gameState.questions[gameState.qIndex];
-            if (!q) { endGame(); return; }
-
-            Object.keys(gameState.players).forEach(n => gameState.players[n].answered = false);
-            gameState.revealed = false;
-
-            document.getElementById("mg-q-counter").textContent = `Q ${gameState.qIndex+1}/${gameState.questions.length}`;
-            document.getElementById("mg-theme-badge").textContent = THEME_LABELS[q.theme] || q.theme;
-            document.getElementById("mg-q-text").innerHTML = q.q;
-            document.getElementById("mg-q-tip").textContent = q.tip ? `💡 ${q.tip}` : "";
-
-            const grid = document.getElementById("mg-answers");
-            grid.innerHTML = q.choices.map((c, i) => `
-                <button class="ans-btn" data-i="${i}" onclick="masterRevealAnswer(${i})">${String.fromCharCode(65+i)}. ${c}</button>
-            `).join("");
-
-            document.getElementById("mg-reveal-info").textContent = "";
-            document.getElementById("btn-next").style.display = "none";
-
-            refreshMasterScoreboard();
-            broadcast({ type: "STATE_SYNC", gameState });
-
-            if (gameState.timerSec > 0) startTimer(gameState.timerSec);
-            else stopTimer();
-        }
-
-        function startTimer(sec) {
-            stopTimer();
-            timerLeft = sec;
-            updateTimerUI();
-            timerInterval = setInterval(() => {
-                timerLeft--;
-                updateTimerUI();
-                if (timerLeft <= 0) {
-                    stopTimer();
-                    masterRevealAnswer(-1);
-                }
-            }, 1000);
-        }
-
-        function stopTimer() {
-            clearInterval(timerInterval);
-            timerInterval = null;
-        }
-
-        function updateTimerUI() {
-            const sec = gameState.timerSec || 20;
-            const frac = timerLeft / sec;
-            const offset = CIRCUM * (1 - frac);
-            const arc = document.getElementById("timer-arc");
-            if (arc) {
-                arc.style.strokeDashoffset = offset;
-                arc.style.stroke = frac > 0.5 ? "var(--green)" : frac > 0.25 ? "var(--gold)" : "var(--red)";
-            }
-            const numEl = document.getElementById("timer-num");
-            if (numEl) numEl.textContent = timerLeft > 0 ? timerLeft : "⏰";
-        }
-
-        function masterRevealAnswer(chosen) {
-            if (gameState.revealed) return;
-            gameState.revealed = true;
-            stopTimer();
-
-            const q = gameState.questions[gameState.qIndex];
-            document.querySelectorAll(".ans-btn").forEach((btn, i) => {
-                btn.disabled = true;
-                if (i === q.correct) btn.classList.add("correct");
-                else if (chosen === i) btn.classList.add("wrong");
-            });
-
-            const answered = Object.values(gameState.players).filter(p => p.answered).length;
-            const total = Object.keys(gameState.players).length;
-            document.getElementById("mg-reveal-info").innerHTML = `
-                <strong>${answered}/${total}</strong> joueur(s) ont répondu · Bonne réponse : <strong>${String.fromCharCode(65+q.correct)}. ${q.choices[q.correct]}</strong>
-            `;
-            document.getElementById("btn-next").style.display = "inline-block";
-            broadcast({ type: "STATE_SYNC", gameState });
-        }
-
-        function checkAllAnswered() {
-            const total = Object.keys(gameState.players).length;
-            if (total === 0) return;
-            const answered = Object.values(gameState.players).filter(p => p.answered).length;
-            if (answered >= total && !gameState.revealed) masterRevealAnswer(-1);
-        }
-
-        function nextQuestion() {
-            gameState.qIndex++;
-            if (gameState.qIndex >= gameState.questions.length) {
-                endGame();
-                return;
-            }
-            broadcast({ type: "STATE_SYNC", gameState });
-            showMasterQuestion();
-        }
-
-        function refreshMasterScoreboard() {
-            const sorted = Object.entries(gameState.players).sort((a, b) => b[1].pts - a[1].pts);
-            const maxPts = sorted[0]?.[1].pts || 1;
-            document.getElementById("mg-scoreboard").innerHTML = sorted.map(([name, p], i) => `
-                <div class="score-row">
-                    <span class="score-rank">${MEDALS[i] || i+1}</span>
-                    <span class="score-name">${name}</span>
-                    ${p.streak >= 2 ? `<span class="score-streak">🔥×${p.streak}</span>` : ""}
-                    <span class="score-pts">${p.pts} pts</span>
-                </div>
-            `).join("");
-        }
-
-        // ══════════════════════════════════════════════
-        // PLAYER — JOIN
-        // ══════════════════════════════════════════════
-        function joinGame() {
-            const name = document.getElementById("player-name-input").value.trim();
-            if (!name) return;
-
+        function updatePlayerProfile() {
+            const name = playerNameInput.value.trim() || 'Toi';
             myName = name;
-            const status = document.getElementById("join-status");
-            status.style.display = "block";
-            status.className = "waiting";
-            status.textContent = "Connexion en cours…";
-
-            broadcast({ type: "PLAYER_JOIN", name });
-
-            setTimeout(() => {
-                status.className = "ok";
-                status.textContent = `✅ Connecté comme « ${name} » — attends que la partie commence !`;
-            }, 500);
-
-            goTo("player-game");
-            document.getElementById("pg-name").textContent = name;
-            document.getElementById("pg-pts").textContent = "0 pt";
+            myEmoji = selectedEmoji;
+            broadcastToRoom({ type: 'player_join', id: myId, name: myName, emoji: myEmoji });
+            if (isHost && gameState && gameState.players[myId]) {
+                gameState.players[myId].name = myName;
+                gameState.players[myId].emoji = myEmoji;
+                broadcastToRoom({ type: 'state_sync', state: gameState });
+            }
+            updateRoomUI();
         }
 
-        document.getElementById("btn-join").addEventListener("click", joinGame);
-        document.getElementById("player-name-input").addEventListener("keydown", (e) => {
-            if (e.key === "Enter") joinGame();
-        });
-
-        // ══════════════════════════════════════════════
-        // PLAYER — GAME VIEW
-        // ══════════════════════════════════════════════
-        function syncPlayerView() {
-            if (!gameState.started) return;
-            if (gameState.ended) { showEndScreen(); return; }
-
-            const q = gameState.questions[gameState.qIndex];
-            if (!q) return;
-
-            const me = gameState.players[myName];
-            if (me) {
-                myPts = me.pts;
-                document.getElementById("pg-pts").textContent = `${myPts} pts`;
-            }
-
-            const content = document.getElementById("player-content");
-
-            if (gameState.revealed) {
-                const wasAnswered = me?.answered;
-                content.innerHTML = `
-                    <div class="player-q-box">
-                        <div class="player-q-text">${q.q}</div>
-                        <div class="player-ans-grid">
-                            ${q.choices.map((c, i) => `
-                                <button class="p-ans-btn ${i === q.correct ? "correct" : ""}" disabled>
-                                    ${String.fromCharCode(65+i)}. ${c}
-                                </button>
-                            `).join("")}
-                        </div>
-                        <div class="feedback-msg ${wasAnswered ? "correct" : "wrong"}">
-                            ${wasAnswered ? "✅ Tu avais répondu !" : "⏰ Temps écoulé !"}
-                        </div>
-                        ${me?.streak >= 2 ? `<div class="streak-badge">🔥 Série de ${me.streak} !</div>` : ""}
-                    </div>
-                    <div class="player-waiting" style="padding:1rem">
-                        <div style="color:var(--text2);font-size:.9rem">⏳ Attends la prochaine question…</div>
-                    </div>
-                `;
-                myAnswered = false;
-                return;
-            }
-
-            if (myAnswered) {
-                content.innerHTML = `
-                    <div class="player-waiting">
-                        <div class="big">✅</div>
-                        <div style="margin-top:.5rem;font-weight:600">Réponse envoyée !</div>
-                        <div style="margin-top:.25rem;color:var(--text2);font-size:.85rem">En attente des autres joueurs…</div>
-                    </div>
-                `;
-                return;
-            }
-
-            content.innerHTML = `
-                <div class="player-q-box">
-                    <div class="player-q-text">${q.q}</div>
-                    <div class="player-ans-grid">
-                        ${q.choices.map((c, i) => `
-                            <button class="p-ans-btn" onclick="playerAnswer(${i})">
-                                ${String.fromCharCode(65+i)}. ${c}
-                            </button>
-                        `).join("")}
-                    </div>
-                </div>
-            `;
-        }
-
-        function playerAnswer(i) {
-            if (myAnswered) return;
-            myAnswered = true;
-            broadcast({ type: "PLAYER_ANSWER", name: myName, ansIndex: i });
-
-            document.querySelectorAll(".p-ans-btn").forEach((b, j) => {
-                b.disabled = true;
-                if (j === i) b.classList.add("selected");
+        // ── Launch Game ──
+        function launchGame() {
+            if (!isHost) return;
+            if (!gameState) gameState = createInitialState();
+            gameState.started = true;
+            gameState.startTime = Date.now();
+            gameState.duration = 180; // 3 minutes
+            gameState.players[myId] = gameState.players[myId] || { id: myId, name: myName, emoji: myEmoji, pts: 30, x: 0.5,
+                y: 0.5, alive: true, streak: 0, answered: false, blocked: false };
+            // assign random positions
+            Object.values(gameState.players).forEach((p, i) => {
+                p.x = 0.1 + Math.random() * 0.8;
+                p.y = 0.1 + Math.random() * 0.8;
+                p.pts = 30;
+                p.alive = true;
+                p.streak = 0;
+                p.answered = false;
+                p.blocked = false;
             });
-            document.getElementById("player-content").innerHTML += `
-                <div class="player-waiting" style="padding:.75rem">
-                    <div style="color:var(--text2);font-size:.85rem">⏳ Attends les autres joueurs…</div>
-                </div>
-            `;
+            broadcastToRoom({ type: 'game_start', state: gameState });
+            enterArena();
+            // start timer
+            let elapsed = 0;
+            const tick = () => {
+                elapsed++;
+                const remaining = Math.max(0, gameState.duration - elapsed);
+                const mins = Math.floor(remaining / 60);
+                const secs = remaining % 60;
+                hudTimer.textContent = `${mins}:${secs.toString().padStart(2,'0')}`;
+                if (remaining <= 0) {
+                    clearInterval(gameInterval);
+                    endGame();
+                }
+                // update scores in HUD
+                updateHUD();
+                // sync state periodically
+                if (elapsed % 2 === 0) {
+                    broadcastToRoom({ type: 'state_sync', state: gameState });
+                }
+            };
+            tick();
+            gameInterval = setInterval(tick, 1000);
+            btnLaunch.disabled = true;
         }
 
-        // ══════════════════════════════════════════════
-        // TABLEAU VIEW
-        // ══════════════════════════════════════════════
-        function syncTableauView() {
-            const content = document.getElementById("tab-content");
-            if (!gameState.started) {
-                content.innerHTML = `
-                    <div class="waiting-screen">
-                        <div class="pulse">📺</div>
-                        <div style="margin-top:1rem">En attente de la partie…</div>
-                    </div>
-                `;
-                return;
-            }
-            if (gameState.ended) {
-                renderTableauEnd();
-                return;
-            }
-
-            const q = gameState.questions[gameState.qIndex];
-            if (!q) return;
-
-            const total = Object.keys(gameState.players).length;
-            const answered = Object.values(gameState.players).filter(p => p.answered).length;
-            const sorted = Object.entries(gameState.players).sort((a, b) => b[1].pts - a[1].pts);
-            const maxPts = sorted[0]?.[1].pts || 1;
-
-            content.innerHTML = `
-                <div style="display:grid;grid-template-columns:1fr 280px;gap:1rem;height:100%">
-                    <div>
-                        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.75rem">
-                            <span style="font-size:.85rem;color:var(--text2)">Q ${gameState.qIndex+1}/${gameState.questions.length}</span>
-                            <span style="font-size:.85rem;background:rgba(155,78,221,.2);color:var(--violet2);padding:.25rem .75rem;border-radius:20px">${THEME_LABELS[q.theme] || q.theme}</span>
-                            <span class="tab-answered-count">${answered}/${total} réponses</span>
-                        </div>
-                        <div class="tab-q-box">
-                            <div class="tab-q-text">${q.q}</div>
-                            <div class="tab-answers">
-                                ${q.choices.map((c, i) => `
-                                    <div class="tab-ans ${gameState.revealed && i === q.correct ? "correct" : ""}">
-                                        ${String.fromCharCode(65+i)}. ${c}
-                                    </div>
-                                `).join("")}
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <div style="font-size:.82rem;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.6rem">Classement</div>
-                        <div class="tab-scoreboard">
-                            ${sorted.map(([name, p], i) => `
-                                <div class="tab-score-row ${i===0?"top1":i===1?"top2":i===2?"top3":""}">
-                                    <span class="tab-score-rank">${MEDALS[i] || i+1}</span>
-                                    <div style="flex:1">
-                                        <div class="tab-score-name">${name} ${p.streak>=2?`🔥×${p.streak}`:""}</div>
-                                        <div style="background:var(--border);border-radius:3px;height:4px;margin-top:3px">
-                                            <div style="width:${Math.round(p.pts/maxPts*100)}%;background:var(--gold);height:4px;border-radius:3px;transition:width .5s"></div>
-                                        </div>
-                                    </div>
-                                    <span class="tab-score-pts">${p.pts}</span>
-                                </div>
-                            `).join("")}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderTableauEnd() {
-            const content = document.getElementById("tab-content");
-            const sorted = Object.entries(gameState.players).sort((a, b) => b[1].pts - a[1].pts);
-            content.innerHTML = `
-                <div style="text-align:center;padding:2rem">
-                    <div style="font-size:3rem">🏆</div>
-                    <h2 style="font-size:2rem;color:var(--gold);margin:.5rem 0">Fin de partie !</h2>
-                    <div style="display:flex;flex-direction:column;gap:.6rem;max-width:420px;margin:1.5rem auto 0">
-                        ${sorted.map(([name, p], i) => `
-                            <div class="tab-score-row ${i===0?"top1":i===1?"top2":i===2?"top3":""}">
-                                <span class="tab-score-rank" style="font-size:1.3rem">${MEDALS[i] || i+1}</span>
-                                <span class="tab-score-name" style="font-size:1.1rem">${name}</span>
-                                <span class="tab-score-pts" style="font-size:1.2rem">${p.pts} pts</span>
-                            </div>
-                        `).join("")}
-                    </div>
-                </div>
-            `;
-        }
-
-        // ══════════════════════════════════════════════
-        // END GAME
-        // ══════════════════════════════════════════════
-        function endGame() {
-            stopTimer();
-            gameState.ended = true;
-            broadcast({ type: "STATE_SYNC", gameState });
-            showEndScreen();
-        }
-
-        function showEndScreen() {
-            const sorted = Object.entries(gameState.players).sort((a, b) => b[1].pts - a[1].pts);
-            document.getElementById("podium-display").innerHTML = sorted.map(([name, p], i) => `
-                <div class="podium-item ${i===0?"rank1":i===1?"rank2":i===2?"rank3":""}">
-                    <span class="podium-medal">${MEDALS[i] || "•"}</span>
-                    <span class="podium-name">${name}</span>
-                    <span class="podium-pts">${p.pts} pts</span>
-                </div>
-            `).join("");
-            goTo("end-screen");
-        }
-
-        function resetAll() {
-            stopTimer();
-            gameState = {
+        function createInitialState() {
+            return {
                 started: false,
                 players: {},
-                questions: [],
+                startTime: 0,
+                duration: 180,
+                questions: shuffleArray([...QUESTION_BANK]),
                 qIndex: 0,
-                revealed: false,
-                timerSec: 20,
-                ended: false
+                collisionCooldown: {},
+                lastCollision: {}
             };
-            myName = "";
-            myPts = 0;
-            myStreak = 0;
-            myAnswered = false;
-            broadcast({ type: "STATE_SYNC", gameState });
-            goTo("landing");
         }
 
-        document.getElementById("btn-restart").addEventListener("click", resetAll);
-
-        // ══════════════════════════════════════════════
-        // INIT
-        // ══════════════════════════════════════════════
-        initBC();
-        if (bc) bc.onmessage = handleMessage;
-
-        // Re-announce on focus
-        window.addEventListener("focus", () => {
-            if (role === "player" && myName) {
-                broadcast({ type: "PLAYER_JOIN", name: myName });
+        // ── Enter Arena ──
+        function enterArena() {
+            showScreen('arena');
+            canvas = canvasEl;
+            ctx = canvas.getContext('2d');
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            setupJoystick();
+            // set initial local pos
+            if (gameState && gameState.players[myId]) {
+                localPos.x = gameState.players[myId].x || 0.5;
+                localPos.y = gameState.players[myId].y || 0.5;
             }
-            if (role === "tableau") {
-                broadcast({ type: "TAB_PING" });
+            questionActive = false;
+            questionOverlay.classList.remove('show');
+            gameOver = false;
+            updateHUD();
+            if (animationId) cancelAnimationFrame(animationId);
+            gameLoop();
+        }
+
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width * devicePixelRatio;
+            canvas.height = rect.height * devicePixelRatio;
+            W = canvas.width;
+            H = canvas.height;
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+        }
+
+        // ── Joystick ──
+        function setupJoystick() {
+            const base = joystickBase;
+            const knob = joystickKnob;
+            let dragging = false;
+            const centerX = base.offsetWidth / 2;
+            const centerY = base.offsetHeight / 2;
+            const maxDist = base.offsetWidth / 2 - knob.offsetWidth / 2;
+
+            function getPos(e) {
+                const rect = base.getBoundingClientRect();
+                const touch = e.touches ? e.touches[0] : e;
+                return {
+                    x: (touch.clientX - rect.left) / rect.width,
+                    y: (touch.clientY - rect.top) / rect.height
+                };
+            }
+
+            function moveKnob(pos) {
+                let dx = pos.x - 0.5;
+                let dy = pos.y - 0.5;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist > 0.5) {
+                    dx = dx / dist * 0.5;
+                    dy = dy / dist * 0.5;
+                }
+                const px = dx * base.offsetWidth;
+                const py = dy * base.offsetHeight;
+                knob.style.transform = `translate(calc(-50% + ${px}px), calc(-50% + ${py}px))`;
+                joystickDX = dx * 2;
+                joystickDY = dy * 2;
+                if (dist > 0.05) {
+                    knob.classList.add('active');
+                } else {
+                    knob.classList.remove('active');
+                    joystickDX = 0;
+                    joystickDY = 0;
+                }
+                joystickActive = dist > 0.05;
+            }
+
+            function handleStart(e) {
+                e.preventDefault();
+                dragging = true;
+                const pos = getPos(e);
+                moveKnob(pos);
+            }
+
+            function handleMove(e) {
+                e.preventDefault();
+                if (!dragging) return;
+                const pos = getPos(e);
+                moveKnob(pos);
+            }
+
+            function handleEnd(e) {
+                e.preventDefault();
+                dragging = false;
+                knob.style.transform = 'translate(-50%, -50%)';
+                joystickDX = 0;
+                joystickDY = 0;
+                joystickActive = false;
+                knob.classList.remove('active');
+            }
+
+            base.addEventListener('mousedown', handleStart);
+            document.addEventListener('mousemove', handleMove);
+            document.addEventListener('mouseup', handleEnd);
+            base.addEventListener('touchstart', handleStart, { passive: false });
+            document.addEventListener('touchmove', handleMove, { passive: false });
+            document.addEventListener('touchend', handleEnd, { passive: false });
+            document.addEventListener('touchcancel', handleEnd, { passive: false });
+        }
+
+        // ── Game Loop ──
+        function gameLoop() {
+            if (!canvas) return;
+            ctx.clearRect(0, 0, W, H);
+
+            // Draw background grid
+            ctx.fillStyle = '#0a0e14';
+            ctx.fillRect(0, 0, W, H);
+            ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+            ctx.lineWidth = 1;
+            const step = 60;
+            for (let x = 0; x <= W; x += step) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, H);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= H; y += step) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(W, y);
+                ctx.stroke();
+            }
+
+            // Update local position from joystick
+            if (gameState && gameState.players[myId] && !gameOver && !questionActive) {
+                const speed = 0.008;
+                let dx = joystickDX * speed;
+                let dy = joystickDY * speed;
+                const p = gameState.players[myId];
+                let nx = p.x + dx;
+                let ny = p.y + dy;
+                nx = Math.max(0.05, Math.min(0.95, nx));
+                ny = Math.max(0.05, Math.min(0.95, ny));
+                p.x = nx;
+                p.y = ny;
+                localPos.x = nx;
+                localPos.y = ny;
+                // send update to host
+                if (!isHost) {
+                    broadcastToRoom({ type: 'player_update', id: myId, x: nx, y: ny, emoji: myEmoji, name: myName });
+                } else {
+                    // host handles locally
+                    broadcastToRoom({ type: 'player_update', id: myId, x: nx, y: ny, emoji: myEmoji, name: myName });
+                }
+            }
+
+            // Draw players
+            if (gameState) {
+                const players = Object.values(gameState.players);
+                players.forEach(p => {
+                    if (!p.alive) return;
+                    const x = p.x * W;
+                    const y = p.y * H;
+                    const radius = Math.min(W, H) * 0.035;
+                    // glow
+                    const grad = ctx.createRadialGradient(x, y, 0, x, y, radius * 2.5);
+                    grad.addColorStop(0, 'rgba(157,78,221,0.15)');
+                    grad.addColorStop(1, 'rgba(157,78,221,0)');
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius * 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    // circle
+                    ctx.shadowColor = 'rgba(157,78,221,0.3)';
+                    ctx.shadowBlur = 20;
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = p.id === myId ? 'rgba(245,200,66,0.2)' : 'rgba(255,255,255,0.06)';
+                    ctx.fill();
+                    ctx.strokeStyle = p.id === myId ? '#f5c842' : 'rgba(255,255,255,0.15)';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                    // emoji
+                    ctx.font = `${radius * 1.4}px serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(p.emoji || '😀', x, y - 2);
+                    // name
+                    ctx.font = `${Math.max(10, radius * 0.6)}px sans-serif`;
+                    ctx.fillStyle = '#8b949e';
+                    ctx.fillText(p.name || '', x, y + radius + 18);
+                    // pts
+                    ctx.font = `${Math.max(10, radius * 0.5)}px sans-serif`;
+                    ctx.fillStyle = '#f5c842';
+                    ctx.fillText(`${p.pts} pts`, x, y + radius + 36);
+                });
+            }
+
+            // Show joystick hint only if not active
+            if (!joystickActive && !questionActive && !gameOver) {
+                ctx.font = '14px sans-serif';
+                ctx.fillStyle = 'rgba(255,255,255,0.15)';
+                ctx.textAlign = 'center';
+                ctx.fillText('👆 Déplace-toi avec le joystick', W / 2, H - 50);
+            }
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        // ── HUD ──
+        function updateHUD() {
+            if (!gameState) return;
+            const me = gameState.players[myId];
+            if (me) {
+                hudMyPts.textContent = me.pts || 0;
+            }
+            const players = Object.values(gameState.players).filter(p => p.alive);
+            hudPlayers.innerHTML = players.map(p => `
+                <div class="hud-player">
+                    <span class="emoji">${p.emoji || '😀'}</span>
+                    <span class="name">${p.name || ''}</span>
+                    <span class="pts">${p.pts || 0}</span>
+                    ${p.id === myId ? ' ⭐' : ''}
+                </div>
+            `).join('');
+        }
+
+        // ── Collision Detection (Host only) ──
+        const COLLISION_COOLDOWN = 3000; // ms
+
+        function checkCollisions(movingId) {
+            if (!isHost || !gameState || questionActive || gameOver) return;
+            const mover = gameState.players[movingId];
+            if (!mover || !mover.alive) return;
+            const now = Date.now();
+            const players = Object.values(gameState.players);
+            for (const other of players) {
+                if (other.id === movingId || !other.alive) continue;
+                const dx = mover.x - other.x;
+                const dy = mover.y - other.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const threshold = 0.06; // collision distance
+                if (dist < threshold) {
+                    // check cooldown
+                    const key1 = `${movingId}-${other.id}`;
+                    const key2 = `${other.id}-${movingId}`;
+                    if (gameState.collisionCooldown[key1] && now - gameState.collisionCooldown[key1] < COLLISION_COOLDOWN)
+                        continue;
+                    if (gameState.collisionCooldown[key2] && now - gameState.collisionCooldown[key2] < COLLISION_COOLDOWN)
+                        continue;
+                    // also check if either is blocked
+                    if (mover.blocked || other.blocked) continue;
+                    // trigger duel
+                    triggerDuel(movingId, other.id);
+                    gameState.collisionCooldown[key1] = now;
+                    gameState.collisionCooldown[key2] = now;
+                    return;
+                }
+            }
+        }
+
+        // ── Duel (Host only) ──
+        let duelData = null;
+
+        function triggerDuel(attackerId, defenderId) {
+            if (!isHost || questionActive || gameOver) return;
+            const attacker = gameState.players[attackerId];
+            const defender = gameState.players[defenderId];
+            if (!attacker || !defender || !attacker.alive || !defender.alive) return;
+            // check if attacker already stole from defender
+            if (myStealCooldown[defenderId] && Date.now() - myStealCooldown[defenderId] < 60000) {
+                return; // can't steal from same person twice in a row quickly
+            }
+            // get a question
+            if (gameState.questions.length === 0) {
+                gameState.questions = shuffleArray([...QUESTION_BANK]);
+                gameState.qIndex = 0;
+            }
+            const q = gameState.questions[gameState.qIndex % gameState.questions.length];
+            gameState.qIndex++;
+            if (gameState.qIndex >= gameState.questions.length) {
+                gameState.questions = shuffleArray([...QUESTION_BANK]);
+                gameState.qIndex = 0;
+            }
+            duelData = {
+                attackerId,
+                defenderId,
+                question: q,
+                answered: {},
+                startTime: Date.now(),
+                timeout: 10000 // 10s to answer
+            };
+            questionActive = true;
+            myAnswered = false;
+            // mark both as blocked
+            attacker.blocked = true;
+            defender.blocked = true;
+            // send question to all players
+            broadcastToRoom({
+                type: 'show_question',
+                duel: {
+                    attackerId,
+                    defenderId,
+                    attackerEmoji: attacker.emoji,
+                    defenderEmoji: defender.emoji,
+                    attackerName: attacker.name,
+                    defenderName: defender.name,
+                    question: q,
+                    timeout: 10000
+                }
+            });
+            // show locally
+            showQuestion(duelData);
+            // auto-close after timeout
+            setTimeout(() => {
+                if (questionActive) {
+                    closeQuestion();
+                }
+            }, 10000);
+        }
+
+        function showQuestion(duel) {
+            const q = duel.question;
+            const att = gameState.players[duel.attackerId];
+            const def = gameState.players[duel.defenderId];
+            qAttacker.textContent = `${att.emoji} ${att.name}`;
+            qDefender.textContent = `${def.emoji} ${def.name}`;
+            qText.textContent = q.q;
+            qTip.textContent = q.tip || '';
+            qResult.textContent = '';
+            qResult.className = 'q-result';
+            qCloseBtn.style.display = 'none';
+            qChoices.innerHTML = q.choices.map((c, i) => `
+                <button onclick="answerQuestion(${i})" data-i="${i}">${String.fromCharCode(65+i)}. ${c}</button>
+            `).join('');
+            questionOverlay.classList.add('show');
+            // if we are the attacker or defender, we can answer
+            // if we are spectating, we just watch
+        }
+
+        function answerQuestion(choiceIndex) {
+            if (!questionActive || myAnswered) return;
+            const me = gameState.players[myId];
+            if (!me) return;
+            // only attacker and defender can answer
+            if (myId !== duelData.attackerId && myId !== duelData.defenderId) return;
+            myAnswered = true;
+            // send answer to host
+            if (!isHost) {
+                broadcastToRoom({ type: 'player_answer', id: myId, choiceIndex });
+            } else {
+                handleAnswer(myId, choiceIndex);
+            }
+            // disable buttons
+            qChoices.querySelectorAll('button').forEach(b => b.disabled = true);
+        }
+
+        function handleAnswer(playerId, choiceIndex) {
+            if (!isHost || !duelData) return;
+            const q = duelData.question;
+            const correct = choiceIndex === q.correct;
+            const isAttacker = playerId === duelData.attackerId;
+            const isDefender = playerId === duelData.defenderId;
+            if (!isAttacker && !isDefender) return;
+            if (duelData.answered[playerId]) return;
+            duelData.answered[playerId] = { choiceIndex, correct, timestamp: Date.now() };
+
+            // check if both answered or timeout
+            const bothAnswered = Object.keys(duelData.answered).length >= 2;
+            const timeUp = Date.now() - duelData.startTime > 10000;
+
+            if (bothAnswered || timeUp) {
+                resolveDuel();
+            }
+        }
+
+        function resolveDuel() {
+            if (!isHost || !duelData) return;
+            const q = duelData.question;
+            const att = gameState.players[duelData.attackerId];
+            const def = gameState.players[duelData.defenderId];
+            const attAns = duelData.answered[duelData.attackerId];
+            const defAns = duelData.answered[duelData.defenderId];
+            let result = 'draw';
+            let winner = null;
+            let loser = null;
+            let points = 0;
+
+            if (attAns && attAns.correct && defAns && defAns.correct) {
+                // both correct → fastest wins
+                if (attAns.timestamp < defAns.timestamp) {
+                    result = 'attacker';
+                    winner = att;
+                    loser = def;
+                } else if (defAns.timestamp < attAns.timestamp) {
+                    result = 'defender';
+                    winner = def;
+                    loser = att;
+                } else {
+                    result = 'draw';
+                }
+            } else if (attAns && attAns.correct) {
+                result = 'attacker';
+                winner = att;
+                loser = def;
+            } else if (defAns && defAns.correct) {
+                result = 'defender';
+                winner = def;
+                loser = att;
+            } else {
+                result = 'draw';
+            }
+
+            if (result === 'attacker' || result === 'defender') {
+                const stealAmount = Math.min(20, loser.pts);
+                winner.pts += stealAmount;
+                loser.pts -= stealAmount;
+                // track steal
+                if (winner.id === myId) {
+                    myStealCooldown[loser.id] = Date.now();
+                }
+                // streak
+                winner.streak = (winner.streak || 0) + 1;
+                loser.streak = 0;
+                points = stealAmount;
+            }
+
+            // unblock
+            att.blocked = false;
+            def.blocked = false;
+
+            // broadcast result
+            broadcastToRoom({
+                type: 'duel_result',
+                result,
+                winnerId: winner ? winner.id : null,
+                loserId: loser ? loser.id : null,
+                points,
+                attackerId: duelData.attackerId,
+                defenderId: duelData.defenderId,
+                correctAnswer: q.correct,
+                choices: q.choices
+            });
+
+            // show result locally
+            showDuelResult({
+                result,
+                winner,
+                loser,
+                points,
+                attackerId: duelData.attackerId,
+                defenderId: duelData.defenderId,
+                correctAnswer: q.correct,
+                choices: q.choices
+            });
+
+            duelData = null;
+            questionActive = false;
+            // close question overlay after a delay
+            setTimeout(() => {
+                questionOverlay.classList.remove('show');
+                broadcastToRoom({ type: 'question_closed' });
+                // sync state
+                broadcastToRoom({ type: 'state_sync', state: gameState });
+                updateHUD();
+            }, 2500);
+        }
+
+        function showDuelResult(data) {
+            const qChoices = document.querySelectorAll('#q-choices button');
+            qChoices.forEach((btn, i) => {
+                btn.disabled = true;
+                if (i === data.correctAnswer) btn.classList.add('correct');
+                else if (btn.dataset.i == data.correctAnswer) btn.classList.add('correct');
+            });
+            const resultEl = qResult;
+            if (data.result === 'draw') {
+                resultEl.textContent = '⚖️ Personne ne répond correctement !';
+                resultEl.className = 'q-result draw';
+            } else if (data.result === 'attacker') {
+                const att = gameState.players[data.attackerId];
+                resultEl.textContent = `⚔️ ${att.emoji} ${att.name} vole ${data.points} pts !`;
+                resultEl.className = 'q-result win';
+            } else if (data.result === 'defender') {
+                const def = gameState.players[data.defenderId];
+                resultEl.textContent = `⚔️ ${def.emoji} ${def.name} contre-attaque et vole ${data.points} pts !`;
+                resultEl.className = 'q-result win';
+            }
+            qCloseBtn.style.display = 'block';
+            qCloseBtn.textContent = 'Continuer';
+            // update HUD
+            updateHUD();
+        }
+
+        function closeQuestion() {
+            questionOverlay.classList.remove('show');
+            questionActive = false;
+            if (isHost) {
+                broadcastToRoom({ type: 'question_closed' });
+                // unblock players if still blocked
+                if (duelData) {
+                    const att = gameState.players[duelData.attackerId];
+                    const def = gameState.players[duelData.defenderId];
+                    if (att) att.blocked = false;
+                    if (def) def.blocked = false;
+                    duelData = null;
+                }
+                broadcastToRoom({ type: 'state_sync', state: gameState });
+            }
+        }
+
+        // ── End Game ──
+        function endGame() {
+            gameOver = true;
+            if (isHost) {
+                clearInterval(gameInterval);
+                const results = Object.values(gameState.players).sort((a, b) => b.pts - a.pts);
+                broadcastToRoom({ type: 'game_end', results });
+                showEndScreen(results);
+            }
+        }
+
+        function showEndScreen(results) {
+            showScreen('end-screen');
+            const sorted = results || Object.values(gameState.players).sort((a, b) => b.pts - a.pts);
+            const winner = sorted[0];
+            endEmoji.textContent = winner ? winner.emoji || '🏆' : '🏆';
+            endTitle.textContent = winner ? `${winner.name} remporte la bataille !` : 'Fin de la bataille !';
+            endPodium.innerHTML = sorted.map((p, i) => `
+                <div class="item rank${i+1 <= 3 ? i+1 : ''}">
+                    <span class="pos">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`}</span>
+                    <span class="ename">${p.emoji || '😀'} ${p.name}</span>
+                    <span class="epts">${p.pts} pts</span>
+                </div>
+            `).join('');
+            if (isHost) {
+                broadcastToRoom({ type: 'game_end', results: sorted });
+            }
+        }
+
+        // ── Reset ──
+        function resetGame() {
+            if (peer) { peer.destroy();
+                peer = null; }
+            connections = {};
+            isHost = false;
+            roomId = '';
+            myId = '';
+            gameState = null;
+            gameOver = false;
+            questionActive = false;
+            if (gameInterval) clearInterval(gameInterval);
+            if (animationId) cancelAnimationFrame(animationId);
+            myStealCooldown = {};
+            duelData = null;
+            showScreen('landing');
+            window.location.reload(); // simple reset
+        }
+
+        function leaveRoom() {
+            if (peer) { peer.destroy();
+                peer = null; }
+            connections = {};
+            isHost = false;
+            roomId = '';
+            myId = '';
+            gameState = null;
+            if (gameInterval) clearInterval(gameInterval);
+            if (animationId) cancelAnimationFrame(animationId);
+            showScreen('landing');
+        }
+
+        // ── Init ──
+        showScreen('landing');
+        playerNameInput.value = 'Joueur' + Math.floor(Math.random() * 100);
+
+        // ── Keyboard shortcuts ──
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && questionActive && !myAnswered) {
+                // auto-select first available choice
+                const btns = qChoices.querySelectorAll('button:not(:disabled)');
+                if (btns.length > 0) btns[0].click();
             }
         });
+
+        console.log('⚡ Grammaire Arena chargée !');
+        console.log('📱 Utilise le joystick pour te déplacer, percute les autres joueurs pour déclencher un duel.');
+        console.log('🏆 Le premier qui répond correctement vole des points !');
     </script>
 </body>
 </html>
