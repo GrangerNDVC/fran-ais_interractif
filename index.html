@@ -218,6 +218,15 @@ select{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var
   </div>
   <div style="font-size:.85rem;color:var(--text2)">Joueurs connectés : <span id="room-count" style="color:var(--gold);font-weight:700">0</span></div>
   <div class="players-list" id="room-players-list"></div>
+  <div class="obs-toggle" style="margin:.6rem 0 .2rem;display:flex;align-items:center;gap:.6rem;font-size:.9rem;color:var(--text2)">
+    <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
+      <input type="checkbox" id="host-play-toggle" checked
+        onchange="hostPlaying=this.checked;$('host-play-label').textContent=this.checked?'🎮 Tu joues':'👁️ Tu observes'"
+        style="width:1.1rem;height:1.1rem;cursor:pointer;accent-color:var(--gold)">
+      <span id="host-play-label">🎮 Tu joues</span>
+    </label>
+    <span style="font-size:.75rem;opacity:.6">(décoche pour observer sans participer)</span>
+  </div>
   <button class="btn-launch" id="btn-launch" onclick="launchGame()" disabled>⚔️ Lancer la bataille !</button>
 </div>
 
@@ -402,6 +411,7 @@ let qActive=false;
 let myAnswered=false;
 let currentDuel=null;
 let gameOver=false;
+let hostPlaying=true;  // false = le host observe sans jouer
 let timerInterval=null;
 let hostSelectedLevel = "6e";
 let hostSelectedThemes = ["conjugaison","accord","nature","ortho","phrase","voix","temps"];
@@ -535,9 +545,6 @@ async function createRoom(){
   await set(roomRef, initState);
   gs=initState;
 
-  // add host as player
-  await addMeToRoom(code);
-
   $('room-code-display').textContent=code;
   showScreen('room-host');
   listenRoom(code);
@@ -651,8 +658,8 @@ function syncPlayerLobby(state){
 // ══════════════════════════════════════════════════════
 async function launchGame(){
   if(!gs) return;
-  // reset all player positions & pts
   const updates={};
+  // Repositionner tous les joueurs existants
   Object.keys(gs.players||{}).forEach(pid=>{
     updates[`rooms/${roomCode}/players/${pid}/pts`]=30;
     updates[`rooms/${roomCode}/players/${pid}/x`]=.1+Math.random()*.8;
@@ -661,6 +668,15 @@ async function launchGame(){
     updates[`rooms/${roomCode}/players/${pid}/streak`]=0;
     updates[`rooms/${roomCode}/players/${pid}/blocked`]=false;
   });
+  // Ajouter le host comme joueur seulement s'il a choisi de jouer
+  if(hostPlaying){
+    updates[`rooms/${roomCode}/players/${myId}`]={
+      id:myId,name:myName,emoji:myEmoji,pts:30,
+      x:.1+Math.random()*.8,y:.1+Math.random()*.8,
+      alive:true,streak:0,blocked:false
+    };
+    onDisconnect(ref(db,`rooms/${roomCode}/players/${myId}`)).update({alive:false,blocked:false});
+  }
   updates[`rooms/${roomCode}/started`]=true;
   updates[`rooms/${roomCode}/timerLeft`]=gs.duration;
   await update(ref(db),updates);
@@ -813,15 +829,28 @@ function syncArena(state){
   const players=Object.values(state.players||{}).filter(p=>!p.id.startsWith('spec_'));
   $('hud-right').innerHTML=players.sort((a,b)=>b.pts-a.pts).map(p=>`
     <div class="hud-pchip">${p.emoji}<span class="name" style="max-width:50px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</span><span class="pts">${p.pts}</span>${p.id===myId?'⭐':''}</div>`).join('');
-  // duel from Firebase
-  if(state.duel && !qActive){
-    currentDuel=state.duel;
-    qActive=true; myAnswered=false;
-    showDuelUI(state.duel);
+  // duel depuis Firebase
+  if(state.duel){
+    if(!qActive){
+      // nouveau duel — afficher le QCM
+      currentDuel=state.duel;
+      qActive=true; myAnswered=false;
+      showDuelUI(state.duel);
+    } else if(state.duel.result && currentDuel && !currentDuel.result){
+      // résultat disponible — afficher le vainqueur aux joueurs aussi
+      currentDuel=state.duel;
+      const q=state.duel.question;
+      const winner=state.duel.winnerId ? (gs.players&&gs.players[state.duel.winnerId]) : null;
+      const loserId=state.duel.winnerId===state.duel.attackerId
+        ? state.duel.defenderId : state.duel.attackerId;
+      const loser=winner ? (gs.players&&gs.players[loserId]) : null;
+      showDuelResult({result:state.duel.result,winner,loser,
+        points:state.duel.points||0,correctAnswer:q.a,choices:q.c});
+    }
   }
-  if(!state.duel && qActive && !currentDuel){
-    // duel cleared
-    qActive=false;
+  if(!state.duel && qActive){
+    // duel effacé par le host — fermer l'overlay
+    qActive=false; currentDuel=null;
     $('q-overlay').classList.remove('show');
   }
   if(state.ended) renderEnd(state);
@@ -1046,7 +1075,7 @@ window.resetAll=function(){
   if(role==='host'&&roomCode){
     try{ remove(ref(db,`rooms/${roomCode}`)); }catch(e){}
   }
-  gs=null; qActive=false; currentDuel=null; gameOver=false;
+  gs=null; qActive=false; currentDuel=null; gameOver=false; hostPlaying=true;
   role=null; roomCode=null; myId=null;
   showScreen('landing');
 };
