@@ -290,13 +290,16 @@ select{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var
 <!-- TOAST -->
 <div id="toast"></div>
 
+<!-- ════ QUESTIONS (chargées avant le module) ════ -->
+<script src="questions.js"></script>
+
 <!-- ════ FIREBASE ════ -->
 <script type="module">
 // ══════════════════════════════════════════════════════
 //  ⚠️  REMPLACE CETTE CONFIG PAR LA TIENNE  ⚠️
 // ══════════════════════════════════════════════════════
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, update, onValue, push, remove, off }
+import { getDatabase, ref, set, get, update, onValue, push, remove, off, onDisconnect }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -312,9 +315,9 @@ const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 
 // ══════════════════════════════════════════════════════
-//  QUESTIONS
+//  QUESTIONS — chargées depuis questions.js (window.ALL_QUESTIONS)
 // ══════════════════════════════════════════════════════
-const ALL_QUESTIONS = {
+const ALL_QUESTIONS = window.ALL_QUESTIONS || {
   "6e":[
     {t:"conjugaison",q:"« Les enfants … dans la cour. » (présent)",c:["jouent","joues","joue","jouez"],a:0},
     {t:"conjugaison",q:"« Tu … ton cartable. » (présent)",c:["prend","prends","prendes","prendre"],a:1},
@@ -369,7 +372,7 @@ const ALL_QUESTIONS = {
     {t:"temps",q:"Valeur du conditionnel : « Il serait né en 1850. »",c:["Hypothèse","Fait certain","Ordre atténué","Fait rapporté incertain"],a:3},
     {t:"ortho",q:"Bonne forme : « … ses efforts, il a échoué. »",c:["Malgré","Malgres","Malgrès","Malgret"],a:0},
   ]
-};
+}; // Fin du fallback — questions.js doit être chargé pour avoir la base complète
 
 // ══════════════════════════════════════════════════════
 //  EMOJIS (30 uniques pour 30 joueurs)
@@ -545,6 +548,8 @@ window.createRoom=createRoom;
 async function addMeToRoom(code){
   const pRef=ref(db,`rooms/${code}/players/${myId}`);
   await set(pRef,{id:myId,name:myName,emoji:myEmoji,pts:30,x:.5,y:.5,alive:true,streak:0,blocked:false});
+  // Déconnexion détectée : marquer le joueur comme inactif
+  onDisconnect(pRef).update({alive:false,blocked:false});
 }
 
 // ══════════════════════════════════════════════════════
@@ -694,6 +699,32 @@ function enterArena(){
   $('q-overlay').classList.remove('show');
   if(animId) cancelAnimationFrame(animId);
   gameLoop();
+  // ── Host : vérification des collisions toutes les 200ms ──
+  // indépendante du gameLoop, s'appuie sur gs mis à jour par Firebase onValue
+  if(role==='host'){
+    if(window._collisionInterval) clearInterval(window._collisionInterval);
+    window._collisionInterval=setInterval(()=>{
+      if(!gs||!gs.players||qActive||gameOver) return;
+      const players=Object.values(gs.players)
+        .filter(p=>p.alive&&!p.blocked&&!p.id.startsWith('spec_'));
+      const now=Date.now();
+      for(let i=0;i<players.length;i++){
+        for(let j=i+1;j<players.length;j++){
+          const a=players[i], b=players[j];
+          const dx=a.x-b.x, dy=a.y-b.y;
+          if(Math.sqrt(dx*dx+dy*dy)<0.07){
+            const k=[a.id,b.id].sort().join('-');
+            const cd=gs.collCD&&gs.collCD[k];
+            if(!cd||now-cd>3000){
+              triggerDuel(a.id,b.id);
+              update(ref(db,`rooms/${roomCode}/collCD`),{[k]:now});
+              return; // un duel à la fois
+            }
+          }
+        }
+      }
+    },200);
+  }
 }
 
 function resizeC(){
@@ -920,9 +951,9 @@ async function resolveDuel(){
   } else if(attAns?.correct){winner=att;loser=def;result='att';}
   else if(defAns?.correct){winner=def;loser=att;result='def';}
   if(winner&&loser){
-    const steal=Math.min(20,loser.pts);
+    const steal=Math.max(1,Math.min(20,loser.pts));
     points=steal;
-    winner.pts+=steal; loser.pts-=steal;
+    winner.pts+=steal; loser.pts=Math.max(0,loser.pts-steal);
     winner.streak=(winner.streak||0)+1; loser.streak=0;
   }
   // write result
@@ -998,9 +1029,15 @@ function renderEnd(state){
 window.resetAll=function(){
   if(timerInterval) clearInterval(timerInterval);
   if(animId) cancelAnimationFrame(animId);
+  if(window._collisionInterval) clearInterval(window._collisionInterval);
   unsubscribers.forEach(f=>f());
   unsubscribers=[];
+  // Nettoyer la room Firebase (host seulement)
+  if(role==='host'&&roomCode){
+    try{ remove(ref(db,`rooms/${roomCode}`)); }catch(e){}
+  }
   gs=null; qActive=false; currentDuel=null; gameOver=false;
+  role=null; roomCode=null; myId=null;
   showScreen('landing');
 };
 
