@@ -700,7 +700,9 @@ function enterArena(){
   if(animId) cancelAnimationFrame(animId);
   gameLoop();
   // ── Host : vérification des collisions toutes les 200ms ──
-  // indépendante du gameLoop, s'appuie sur gs mis à jour par Firebase onValue
+  // Mécanique ROUND-ROBIN : après un duel A-B, ni A ni B ne peuvent se
+  // recroiser tant que l'un OU l'autre n'a pas combattu quelqu'un d'autre.
+  // Avec seulement 2 joueurs : pas de round-robin, ils s'affrontent librement.
   if(role==='host'){
     if(window._collisionInterval) clearInterval(window._collisionInterval);
     window._collisionInterval=setInterval(()=>{
@@ -708,6 +710,8 @@ function enterArena(){
       const players=Object.values(gs.players)
         .filter(p=>p.alive&&!p.blocked&&!p.id.startsWith('spec_'));
       const now=Date.now();
+      const lastOpp=gs.lastOpp||{};
+      const moreThanTwo=players.length>2;
       for(let i=0;i<players.length;i++){
         for(let j=i+1;j<players.length;j++){
           const a=players[i], b=players[j];
@@ -715,10 +719,16 @@ function enterArena(){
           if(Math.sqrt(dx*dx+dy*dy)<0.07){
             const k=[a.id,b.id].sort().join('-');
             const cd=gs.collCD&&gs.collCD[k];
-            if(!cd||now-cd>3000){
+            if(cd&&now-cd<1000) continue;
+            const blocked=moreThanTwo&&(lastOpp[a.id]===b.id||lastOpp[b.id]===a.id);
+            if(!blocked){
               triggerDuel(a.id,b.id);
-              update(ref(db,`rooms/${roomCode}/collCD`),{[k]:now});
-              return; // un duel à la fois
+              update(ref(db,`rooms/${roomCode}`),{
+                [`collCD/${k}`]:now,
+                [`lastOpp/${a.id}`]:b.id,
+                [`lastOpp/${b.id}`]:a.id
+              });
+              return;
             }
           }
         }
