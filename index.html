@@ -97,6 +97,33 @@ select{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var
 .hud-pchip{display:flex;align-items:center;gap:.3rem;background:rgba(0,0,0,.6);padding:.15rem .6rem .15rem .3rem;border-radius:20px;font-size:.75rem;border:1px solid var(--border)}
 .hud-pchip .pts{font-weight:700;color:var(--gold)}
 
+/* ══ SIDE PANEL ══ */
+#side-panel{position:absolute;top:4.2rem;right:.7rem;bottom:.7rem;width:min(240px,38vw);z-index:8;display:flex;flex-direction:column;gap:.5rem;pointer-events:none}
+#side-panel.collapsed .panel-box{display:none}
+.panel-toggle{position:absolute;top:-3.6rem;right:0;pointer-events:auto;background:rgba(0,0,0,.6);border:1px solid var(--border);color:var(--text2);border-radius:8px;padding:.3rem .6rem;font-size:.72rem;cursor:pointer}
+.panel-box{background:rgba(10,14,20,.72);border:1px solid var(--border);border-radius:14px;backdrop-filter:blur(6px);display:flex;flex-direction:column;overflow:hidden;pointer-events:auto}
+#panel-progress{padding:.6rem .7rem .7rem;flex-shrink:0;max-height:38%;overflow-y:auto}
+.panel-title{font-size:.66rem;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.45rem;display:flex;align-items:center;gap:.3rem}
+.prog-row{display:flex;align-items:center;gap:.4rem;margin-bottom:.4rem;font-size:.72rem}
+.prog-row:last-child{margin-bottom:0}
+.prog-emoji{flex-shrink:0;font-size:.9rem;width:1.1rem;text-align:center}
+.prog-track{flex:1;height:8px;border-radius:5px;background:rgba(255,255,255,.06);overflow:hidden;position:relative}
+.prog-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--violet),var(--gold));transition:width .5s cubic-bezier(.4,1.4,.6,1)}
+.prog-fill.is-me{background:linear-gradient(90deg,var(--gold2),var(--gold))}
+.prog-pts{flex-shrink:0;font-weight:700;color:var(--gold);width:2.4rem;text-align:right;font-variant-numeric:tabular-nums}
+#panel-log{flex:1;min-height:0;padding:.6rem .7rem;display:flex;flex-direction:column}
+.log-feed{flex:1;overflow-y:auto;display:flex;flex-direction:column-reverse;gap:.32rem}
+.log-row{font-size:.7rem;line-height:1.4;color:var(--text2);background:rgba(255,255,255,.03);border-radius:8px;padding:.35rem .5rem;animation:logIn .25s ease-out}
+.log-row .lw{color:var(--green);font-weight:700}
+.log-row .ll{color:var(--text2)}
+.log-row .lp{color:var(--gold);font-weight:700}
+.log-row.draw{color:var(--text2);font-style:italic}
+@keyframes logIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@media (max-width:520px){#side-panel{display:none}}
+
+/* ══ COIN FLY ANIMATION ══ */
+.coin-fly{position:absolute;font-size:1.1rem;pointer-events:none;z-index:40;will-change:transform,opacity;filter:drop-shadow(0 0 4px rgba(245,200,66,.8))}
+
 /* ══ JOYSTICK ══ */
 #joystick-wrap{position:absolute;bottom:clamp(12px,4vw,30px);left:clamp(12px,4vw,30px);width:clamp(80px,18vw,130px);height:clamp(80px,18vw,130px);z-index:20;touch-action:none}
 #joystick-base{width:100%;height:100%;border-radius:50%;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.1);position:relative;touch-action:none}
@@ -270,6 +297,18 @@ select{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var
       <div class="hud-pts">🏆 <strong id="hud-mypts">30</strong> pts</div>
     </div>
     <div class="hud-right" id="hud-right"></div>
+  </div>
+  <div id="coin-layer" style="position:absolute;inset:0;z-index:40;pointer-events:none;overflow:hidden"></div>
+  <div id="side-panel">
+    <button class="panel-toggle" id="panel-toggle" onclick="toggleSidePanel()">📊 Masquer</button>
+    <div class="panel-box" id="panel-progress">
+      <div class="panel-title">📈 Progression</div>
+      <div id="progress-list"></div>
+    </div>
+    <div class="panel-box" id="panel-log">
+      <div class="panel-title">📜 Historique</div>
+      <div class="log-feed" id="log-feed"></div>
+    </div>
   </div>
   <div id="joystick-wrap">
     <div id="joystick-base"><div id="joystick-knob"></div></div>
@@ -611,7 +650,14 @@ function listenRoom(code){
     if(!snap.exists()) return;
     const state=snap.val();
     gs=state;
-    if(role==='host') syncHostLobby(state);
+    if(role==='host'){
+      syncHostLobby(state);
+      if(state.started&&!gameOver){
+        if(!$('arena').classList.contains('active')) enterArena();
+        syncArena(state);
+      }
+      if(state.ended) renderEnd(state);
+    }
     if(role==='player'||role==='spectator'){
       syncPlayerLobby(state);
       if(state.started&&!gameOver){
@@ -712,6 +758,8 @@ function enterArena(){
   resizeC(); window.addEventListener('resize',resizeC);
   setupJoystick();
   qActive=false; myAnswered=false; currentDuel=null; gameOver=false;
+  window._lastCoinFlyTs=null;
+  if($('coin-layer')) $('coin-layer').innerHTML='';
   $('q-overlay').classList.remove('show');
   if(animId) cancelAnimationFrame(animId);
   gameLoop();
@@ -895,6 +943,9 @@ function syncArena(state){
   const players=Object.values(state.players||{}).filter(p=>!p.id.startsWith('spec_'));
   $('hud-right').innerHTML=players.sort((a,b)=>b.pts-a.pts).map(p=>`
     <div class="hud-pchip">${p.emoji}<span class="name" style="max-width:50px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</span><span class="pts">${p.pts}</span>${p.id===myId?'⭐':''}</div>`).join('');
+  // panel latéral : progression + log
+  updateProgressPanel(players);
+  renderLogFeed(state.log);
   // duel depuis Firebase
   if(state.duel){
     const iAmInDuel=myId===state.duel.attackerId||myId===state.duel.defenderId;
@@ -911,6 +962,11 @@ function syncArena(state){
       const loserId=state.duel.winnerId===state.duel.attackerId
         ?state.duel.defenderId:state.duel.attackerId;
       const loser=winner?(gs.players&&gs.players[loserId]):null;
+      // animation pièces : déclenchée une seule fois par duel résolu
+      if(state.duel.coinFly && window._lastCoinFlyTs!==state.duel.coinFly.ts){
+        window._lastCoinFlyTs=state.duel.coinFly.ts;
+        playCoinFly(state.duel.coinFly);
+      }
       if(iAmInDuel){
         // Participants : résultat dans l'overlay QCM
         showDuelResult({result:state.duel.result,winner,loser,
@@ -930,6 +986,83 @@ function syncArena(state){
     $('q-overlay').classList.remove('show');
   }
   if(state.ended) renderEnd(state);
+}
+
+// ══════════════════════════════════════════════════════
+//  SIDE PANEL — progression + historique des duels
+// ══════════════════════════════════════════════════════
+window._sidePanelOpen=true;
+window.toggleSidePanel=function(){
+  window._sidePanelOpen=!window._sidePanelOpen;
+  $('side-panel').classList.toggle('collapsed',!window._sidePanelOpen);
+  $('panel-toggle').textContent=window._sidePanelOpen?'📊 Masquer':'📊 Afficher';
+};
+
+function updateProgressPanel(players){
+  const list=$('progress-list');
+  if(!list||!players.length) return;
+  const maxPts=Math.max(1,...players.map(p=>p.pts||0));
+  const sorted=[...players].sort((a,b)=>b.pts-a.pts);
+  list.innerHTML=sorted.map(p=>{
+    const pct=Math.max(2,Math.round((p.pts||0)/maxPts*100));
+    const isMe=p.id===myId;
+    return `<div class="prog-row">
+      <span class="prog-emoji">${p.emoji}</span>
+      <div class="prog-track"><div class="prog-fill${isMe?' is-me':''}" style="width:${pct}%"></div></div>
+      <span class="prog-pts">${p.pts}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderLogFeed(log){
+  const feed=$('log-feed');
+  if(!feed) return;
+  if(!log){ feed.innerHTML=''; return; }
+  const entries=Object.values(log).sort((a,b)=>b.ts-a.ts).slice(0,30);
+  feed.innerHTML=entries.map(e=>{
+    if(e.result==='draw'||!e.winEmoji){
+      return `<div class="log-row draw">⚖️ Égalité — pas de vol</div>`;
+    }
+    return `<div class="log-row"><span class="lw">${e.winEmoji} ${e.winName}</span> bat <span class="ll">${e.loseEmoji} ${e.loseName}</span> → <span class="lp">+${e.points} pts</span></div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════
+//  ANIMATION : pièces volantes (perdant → gagnant)
+// ══════════════════════════════════════════════════════
+function playCoinFly(data){
+  const layer=$('coin-layer');
+  if(!layer||!canvas) return;
+  const rect=canvas.getBoundingClientRect();
+  const fromX=(data.fromX??0.5)*rect.width, fromY=(data.fromY??0.5)*rect.height;
+  const toX=(data.toX??0.5)*rect.width, toY=(data.toY??0.5)*rect.height;
+  const n=Math.min(8,Math.max(3,Math.round((data.amount||1)/3)));
+  for(let i=0;i<n;i++){
+    const delay=i*70;
+    setTimeout(()=>{
+      const coin=document.createElement('div');
+      coin.className='coin-fly';
+      coin.textContent='🪙';
+      const jitterX=(Math.random()-0.5)*30, jitterY=(Math.random()-0.5)*30;
+      coin.style.left=(fromX+jitterX)+'px';
+      coin.style.top=(fromY+jitterY)+'px';
+      coin.style.transform='translate(-50%,-50%) scale(0.6)';
+      coin.style.opacity='0';
+      layer.appendChild(coin);
+      requestAnimationFrame(()=>{
+        coin.style.transition='left .65s cubic-bezier(.2,.7,.3,1), top .65s cubic-bezier(.2,.7,.3,1), opacity .2s ease-out, transform .65s cubic-bezier(.2,.7,.3,1)';
+        coin.style.opacity='1';
+        coin.style.transform='translate(-50%,-50%) scale(1.1) rotate(180deg)';
+        coin.style.left=(toX+(Math.random()-0.5)*16)+'px';
+        coin.style.top=(toY+(Math.random()-0.5)*16)+'px';
+      });
+      setTimeout(()=>{
+        coin.style.opacity='0';
+        coin.style.transform='translate(-50%,-50%) scale(0.4) rotate(360deg)';
+      },560);
+      setTimeout(()=>coin.remove(),820);
+    },delay);
+  }
 }
 
 // ══════════════════════════════════════════════════════
@@ -1084,8 +1217,26 @@ async function resolveDuel(){
     updates[`rooms/${roomCode}/players/${winner.id}/streak`]=winner.streak;
     updates[`rooms/${roomCode}/players/${loser.id}/pts`]=loser.pts;
     updates[`rooms/${roomCode}/players/${loser.id}/streak`]=0;
+    // données pour l'animation des pièces (positions au moment du duel)
+    updates[`rooms/${roomCode}/duel/coinFly`]={
+      fromId:loser.id,toId:winner.id,
+      fromX:loser.x,fromY:loser.y,toX:winner.x,toY:winner.y,
+      amount:points,ts:Date.now()
+    };
   }
   await update(ref(db),updates);
+  // log historique (chat des duels) — séparé pour ne pas bloquer si ça échoue
+  try{
+    const logKey=push(ref(db,`rooms/${roomCode}/log`)).key;
+    await update(ref(db),{
+      [`rooms/${roomCode}/log/${logKey}`]:{
+        result, points,
+        winEmoji:winner?.emoji||null, winName:winner?.name||null,
+        loseEmoji:loser?.emoji||null, loseName:loser?.name||null,
+        ts:Date.now()
+      }
+    });
+  }catch(e){}
   // show result UI
   showDuelResult({result,winner,loser,points,correctAnswer:q.a,choices:q.c});
   // clear duel after 2.5s
@@ -1151,6 +1302,9 @@ window.resetAll=function(){
   if(role==='host'&&roomCode){
     try{ remove(ref(db,`rooms/${roomCode}`)); }catch(e){}
   }
+  window._lastCoinFlyTs=null;
+  if($('coin-layer')) $('coin-layer').innerHTML='';
+  if($('log-feed')) $('log-feed').innerHTML='';
   gs=null; qActive=false; currentDuel=null; gameOver=false; hostPlaying=true;
   role=null; roomCode=null; myId=null;
   showScreen('landing');
