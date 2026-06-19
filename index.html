@@ -1166,6 +1166,7 @@ async function triggerDuel(attId,defId){
 
 function showDuelUI(duel){
   const q=duel.question;
+  window._myChoice=null;
   $('q-att').textContent=`${duel.attackerEmoji} ${duel.attackerName}`;
   $('q-def').textContent=`${duel.defenderEmoji} ${duel.defenderName}`;
   $('q-question').textContent=q.q;
@@ -1180,17 +1181,30 @@ function showDuelUI(duel){
 window.answerQ=async function(ci){
   if(!qActive||myAnswered||!currentDuel) return;
   if(myId!==currentDuel.attackerId&&myId!==currentDuel.defenderId) return;
-  myAnswered=true;
-  $('q-grid').querySelectorAll('.q-btn').forEach(b=>b.disabled=true);
-  // write my answer to Firebase
-  await update(ref(db,`rooms/${roomCode}/duel/answered`),{
-    [myId]:{ci,correct:ci===currentDuel.question.a,ts:Date.now()}
+  myAnswered=true; window._myChoice=ci;
+  $('q-grid').querySelectorAll('.q-btn').forEach((b,idx)=>{
+    b.disabled=true;
+    if(idx===ci) b.style.boxShadow='0 0 0 2px var(--gold) inset';
   });
-  // host resolves when all answered
-  if(role==='host'){
-    const snap=await get(ref(db,`rooms/${roomCode}/duel/answered`));
-    const ans=snap.val()||{};
-    if(Object.keys(ans).length>=2) await resolveDuel();
+  $('q-result').textContent='⏳ Réponse envoyée — en attente…';
+  $('q-result').className='q-result-box';
+  try{
+    // write my answer to Firebase
+    await update(ref(db,`rooms/${roomCode}/duel/answered`),{
+      [myId]:{ci,correct:ci===currentDuel.question.a,ts:Date.now()}
+    });
+    // host resolves when all answered
+    if(role==='host'){
+      const snap=await get(ref(db,`rooms/${roomCode}/duel/answered`));
+      const ans=snap.val()||{};
+      if(Object.keys(ans).length>=2) await resolveDuel();
+    }
+  }catch(err){
+    console.error('[answerQ] échec envoi réponse :',err);
+    $('q-result').textContent='⚠️ Connexion instable — réessaie';
+    $('q-result').className='q-result-box draw';
+    myAnswered=false; window._myChoice=null;
+    $('q-grid').querySelectorAll('.q-btn').forEach(b=>{b.disabled=false;b.style.boxShadow='';});
   }
 };
 
@@ -1262,8 +1276,9 @@ async function resolveDuel(){
 
 function showDuelResult(data){
   $('q-grid').querySelectorAll('.q-btn').forEach((b,i)=>{
-    b.disabled=true;
+    b.disabled=true; b.style.boxShadow='';
     if(i===data.correctAnswer) b.classList.add('correct');
+    else if(window._myChoice===i) b.classList.add('wrong');
   });
   const r=$('q-result');
   if(data.result==='draw'){r.textContent='⚖️ Personne ne répond → pas de vol de points !';r.className='q-result-box draw';}
