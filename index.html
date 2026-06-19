@@ -787,28 +787,94 @@ function gameLoop(){
     }
   }
 
-  // draw
+  // ── Dessin des joueurs ──
   if(gs&&gs.players){
+    const lastOpp=gs.lastOpp||{};
+    const now=Date.now();
     Object.values(gs.players).forEach(p=>{
       if(!p.alive||p.id.startsWith('spec_')) return;
       const x=p.x*W, y=p.y*H, r=Math.min(W,H)*.038;
-      const g=ctx.createRadialGradient(x,y,0,x,y,r*2.5);
-      g.addColorStop(0,'rgba(157,78,221,0.13)'); g.addColorStop(1,'rgba(157,78,221,0)');
-      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r*2.5,0,Math.PI*2); ctx.fill();
-      ctx.shadowColor='rgba(157,78,221,0.25)'; ctx.shadowBlur=18;
+      const isMe  = p.id===myId;
+      // Gris = déjà affronté, bloqué par round-robin (sur écran joueur uniquement)
+      const isGray= role==='player' && !isMe &&
+        (lastOpp[myId]===p.id || lastOpp[p.id]===myId);
+      // Rouge = en train de se battre (visible par tous)
+      const isDueling = qActive && currentDuel &&
+        (p.id===currentDuel.attackerId || p.id===currentDuel.defenderId);
+
+      if(isGray){
+        // ── Joueur déjà affronté : silhouette grise ──
+        ctx.globalAlpha=0.28;
+        ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+        ctx.fillStyle='rgba(140,140,140,0.08)'; ctx.fill();
+        ctx.strokeStyle='rgba(140,140,140,0.3)'; ctx.lineWidth=1.5; ctx.stroke();
+        ctx.font=`${Math.max(14,r*1.3)}px serif`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(p.emoji,x,y-1);
+        ctx.font=`bold ${Math.max(9,r*.55)}px sans-serif`;
+        ctx.fillStyle='rgba(160,160,160,.5)';
+        ctx.fillText(p.name,x,y+r+16);
+        ctx.font=`${Math.max(8,r*.45)}px sans-serif`;
+        ctx.fillStyle='rgba(160,160,160,.4)';
+        ctx.fillText(p.pts+' pts',x,y+r+30);
+        ctx.globalAlpha=1;
+        return;
+      }
+
+      // ── Halo coloré ──
+      const pulse=isMe ? 0.14+0.07*Math.sin(now/380) : 0.08;
+      const haloRGB=isMe?'245,200,66':isDueling?'255,90,90':'157,78,221';
+      const g=ctx.createRadialGradient(x,y,0,x,y,r*2.8);
+      g.addColorStop(0,`rgba(${haloRGB},${pulse})`);
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r*2.8,0,Math.PI*2); ctx.fill();
+
+      // ── Cercle principal ──
+      ctx.shadowColor=isMe?'rgba(245,200,66,0.7)':isDueling?'rgba(255,90,90,0.6)':'rgba(157,78,221,0.35)';
+      ctx.shadowBlur=isMe?24:isDueling?18:12;
       ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
-      ctx.fillStyle=p.id===myId?'rgba(245,200,66,0.18)':'rgba(255,255,255,0.05)';
+      ctx.fillStyle=isMe?'rgba(245,200,66,0.18)':'rgba(255,255,255,0.05)';
       ctx.fill();
-      ctx.strokeStyle=p.id===myId?'#f5c842':'rgba(255,255,255,0.12)';
-      ctx.lineWidth=p.id===myId?2.5:1.5; ctx.stroke(); ctx.shadowBlur=0;
+      ctx.strokeStyle=isMe?'#f5c842':isDueling?'rgba(255,110,110,0.85)':'rgba(157,78,221,0.4)';
+      ctx.lineWidth=isMe?3:isDueling?2.5:1.5;
+      ctx.stroke(); ctx.shadowBlur=0;
+
+      // ── Emoji + nom + pts ──
       const fs=Math.max(14,r*1.3);
       ctx.font=`${fs}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.fillText(p.emoji,x,y-1);
-      ctx.font=`bold ${Math.max(9,r*.55)}px sans-serif`; ctx.fillStyle='rgba(230,237,243,.8)';
+      ctx.font=`bold ${Math.max(9,r*.55)}px sans-serif`;
+      ctx.fillStyle=isMe?'rgba(255,230,100,.95)':'rgba(230,237,243,.85)';
       ctx.fillText(p.name,x,y+r+16);
-      ctx.font=`${Math.max(8,r*.45)}px sans-serif`; ctx.fillStyle='#f5c842';
+      ctx.font=`${Math.max(8,r*.45)}px sans-serif`;
+      ctx.fillStyle='#f5c842';
       ctx.fillText(p.pts+' pts',x,y+r+30);
     });
+
+    // ── Épées entre les combattants (visible par les non-participants) ──
+    if(qActive && currentDuel && gs.players){
+      const iAm=myId===currentDuel.attackerId||myId===currentDuel.defenderId;
+      const att=gs.players[currentDuel.attackerId];
+      const def=gs.players[currentDuel.defenderId];
+      if(att && def && !iAm){
+        const ax=att.x*W, ay=att.y*H, dx=def.x*W, dy=def.y*H;
+        const mx=(ax+dx)/2, my=(ay+dy)/2;
+        // Ligne pointillée entre les deux
+        ctx.save();
+        ctx.setLineDash([5,5]);
+        ctx.strokeStyle='rgba(255,200,50,0.25)'; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(dx,dy); ctx.stroke();
+        ctx.restore();
+        // Icône épées
+        const sz=Math.min(W,H)*0.065;
+        ctx.font=`${sz}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('⚔️',mx,my);
+        // Noms des combattants
+        ctx.font=`bold ${Math.max(10,sz*0.38)}px sans-serif`;
+        ctx.fillStyle='rgba(255,200,50,0.8)';
+        ctx.fillText(`${att.emoji} ${att.name} vs ${def.emoji} ${def.name}`,mx,my-sz*0.9);
+      }
+    }
   }
   if(!jActive&&!qActive&&!gameOver){
     ctx.font='12px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.1)';
@@ -831,21 +897,31 @@ function syncArena(state){
     <div class="hud-pchip">${p.emoji}<span class="name" style="max-width:50px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</span><span class="pts">${p.pts}</span>${p.id===myId?'⭐':''}</div>`).join('');
   // duel depuis Firebase
   if(state.duel){
+    const iAmInDuel=myId===state.duel.attackerId||myId===state.duel.defenderId;
     if(!qActive){
-      // nouveau duel — afficher le QCM
       currentDuel=state.duel;
       qActive=true; myAnswered=false;
-      showDuelUI(state.duel);
+      // QCM uniquement pour les deux combattants
+      if(iAmInDuel) showDuelUI(state.duel);
+      // Les autres voient les épées dessinées sur le canvas
     } else if(state.duel.result && currentDuel && !currentDuel.result){
-      // résultat disponible — afficher le vainqueur aux joueurs aussi
       currentDuel=state.duel;
       const q=state.duel.question;
-      const winner=state.duel.winnerId ? (gs.players&&gs.players[state.duel.winnerId]) : null;
+      const winner=state.duel.winnerId?(gs.players&&gs.players[state.duel.winnerId]):null;
       const loserId=state.duel.winnerId===state.duel.attackerId
-        ? state.duel.defenderId : state.duel.attackerId;
-      const loser=winner ? (gs.players&&gs.players[loserId]) : null;
-      showDuelResult({result:state.duel.result,winner,loser,
-        points:state.duel.points||0,correctAnswer:q.a,choices:q.c});
+        ?state.duel.defenderId:state.duel.attackerId;
+      const loser=winner?(gs.players&&gs.players[loserId]):null;
+      if(iAmInDuel){
+        // Participants : résultat dans l'overlay QCM
+        showDuelResult({result:state.duel.result,winner,loser,
+          points:state.duel.points||0,correctAnswer:q.a,choices:q.c});
+      } else {
+        // Spectateurs du duel : toast discret + les épées restent jusqu'à duel:null
+        if(state.duel.result!=='draw'&&winner)
+          toast(`⚔️ ${winner.emoji} ${winner.name} remporte le duel !`,3000);
+        else
+          toast('⚖️ Égalité — personne ne vole !',2500);
+      }
     }
   }
   if(!state.duel && qActive){
@@ -984,11 +1060,11 @@ async function resolveDuel(){
   const attAns=ans[duel.attackerId], defAns=ans[duel.defenderId];
   const att=gs.players[duel.attackerId], def=gs.players[duel.defenderId];
   let winner=null,loser=null,result='draw',points=0;
-  if(attAns?.correct&&defAns?.correct){
-    if(attAns.ts<defAns.ts){winner=att;loser=def;result='att';}
-    else{winner=def;loser=att;result='def';}
-  } else if(attAns?.correct){winner=att;loser=def;result='att';}
-  else if(defAns?.correct){winner=def;loser=att;result='def';}
+  // Option A : seul celui qui a juste SANS que l'autre ait aussi juste gagne
+  // Les deux ont bon → égalité (pas de vol, connexion trop variable)
+  // Les deux ont faux → égalité
+  if(attAns?.correct && !defAns?.correct){winner=att;loser=def;result='att';}
+  else if(defAns?.correct && !attAns?.correct){winner=def;loser=att;result='def';}
   if(winner&&loser){
     const steal=Math.max(1,Math.min(20,loser.pts));
     points=steal;
